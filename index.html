@@ -1,0 +1,1699 @@
+<!DOCTYPE html>
+<html lang="vi" class="dark">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Kiến trúc Kỷ nguyên số: Toàn cảnh CNTT 4.0 | Digital Library</title>
+    <!-- Tailwind CSS -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    <!-- Google Fonts: Inter & JetBrains Mono -->
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&family=JetBrains+Mono:wght@400;500;700&display=swap" rel="stylesheet">
+    <!-- Font Awesome for Tech Icons -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    
+    <script>
+        tailwind.config = {
+            darkMode: 'class',
+            theme: {
+                extend: {
+                    fontFamily: {
+                        sans: ['Inter', 'sans-serif'],
+                        mono: ['JetBrains Mono', 'monospace'],
+                    },
+                    colors: {
+                        navy: {
+                            950: '#020813',
+                            900: '#040d21',
+                            800: '#0a1935',
+                            700: '#11264d',
+                        },
+                        cyan: {
+                            neon: '#00f0ff',
+                            glow: 'rgba(0, 240, 255, 0.25)',
+                        }
+                    }
+                }
+            }
+        }
+    </script>
+    <style>
+        body {
+            background-color: #040d21;
+            color: #e2e8f0;
+            background-image: 
+                radial-gradient(circle at 15% 50%, rgba(0, 240, 255, 0.06), transparent 25%),
+                radial-gradient(circle at 85% 30%, rgba(0, 119, 255, 0.08), transparent 25%),
+                linear-gradient(to right, rgba(0, 240, 255, 0.03) 1px, transparent 1px),
+                linear-gradient(to bottom, rgba(0, 240, 255, 0.03) 1px, transparent 1px);
+            background-size: 100% 100%, 100% 100%, 40px 40px, 40px 40px;
+        }
+
+        /* Custom Scrollbar */
+        ::-webkit-scrollbar {
+            width: 8px;
+            height: 8px;
+        }
+        ::-webkit-scrollbar-track {
+            background: #020813;
+        }
+        ::-webkit-scrollbar-thumb {
+            background: #11264d;
+            border-radius: 4px;
+            border: 1px solid rgba(0, 240, 255, 0.3);
+        }
+        ::-webkit-scrollbar-thumb:hover {
+            background: #00f0ff;
+        }
+
+        /* Neon Glow Effects */
+        .neon-border {
+            border: 1px solid rgba(0, 240, 255, 0.25);
+            box-shadow: 0 0 15px rgba(0, 240, 255, 0.05);
+            transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+        }
+        .neon-border:hover {
+            border-color: #00f0ff;
+            box-shadow: 0 0 25px rgba(0, 240, 255, 0.2);
+            transform: translateY(-3px);
+        }
+        .neon-text {
+            text-shadow: 0 0 10px rgba(0, 240, 255, 0.5);
+        }
+        .glass-panel {
+            background: rgba(10, 25, 53, 0.75);
+            backdrop-filter: blur(12px);
+            -webkit-backdrop-filter: blur(12px);
+        }
+
+        /* Radar SVG Node Hover */
+        .radar-node {
+            cursor: pointer;
+            transition: all 0.25s ease;
+        }
+        .radar-node:hover circle.node-pulse {
+            r: 14;
+            fill-opacity: 0.4;
+        }
+        .radar-node:hover text {
+            fill: #00f0ff;
+            font-weight: 800;
+        }
+
+        /* Hide scrollbar for category pills */
+        .no-scrollbar::-webkit-scrollbar {
+            display: none;
+        }
+        .no-scrollbar {
+            -ms-overflow-style: none;
+            scrollbar-width: none;
+        }
+    </style>
+</head>
+<body class="min-h-screen flex flex-col font-sans antialiased selection:bg-cyan-neon selection:text-navy-950">
+
+    <!-- Top Navigation Bar -->
+    <header class="sticky top-0 z-40 glass-panel border-b border-cyan-500/20">
+        <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+            <div class="flex flex-col md:flex-row items-center justify-between py-3 gap-3">
+                <!-- Brand Logo -->
+                <div class="flex items-center justify-between w-full md:w-auto">
+                    <div class="flex items-center gap-3 cursor-pointer" onclick="resetFilters()">
+                        <div class="w-10 h-10 rounded-xl bg-navy-900 border border-cyan-neon flex items-center justify-center shadow-[0_0_15px_rgba(0,240,255,0.3)]">
+                            <i class="fa-solid fa-microchip text-cyan-neon text-lg"></i>
+                        </div>
+                        <div>
+                            <span class="text-[10px] font-mono tracking-widest text-cyan-neon uppercase block">The Digital Era Blueprint</span>
+                            <h1 class="text-base sm:text-lg font-extrabold tracking-tight text-white">KIẾN TRÚC KỶ NGUYÊN SỐ <span class="text-cyan-neon">4.0</span></h1>
+                        </div>
+                    </div>
+
+                    <!-- Mobile Action Buttons -->
+                    <div class="flex items-center gap-2 md:hidden">
+                        <button onclick="openBookmarkModal()" class="relative p-2.5 rounded-xl bg-navy-800 border border-cyan-500/30 text-cyan-neon hover:bg-navy-700" title="Sổ tay đã lưu">
+                            <i class="fa-solid fa-bookmark"></i>
+                            <span id="bookmarkCountMobile" class="absolute -top-1 -right-1 w-4 h-4 rounded-full bg-cyan-neon text-navy-950 text-[10px] font-bold flex items-center justify-center">0</span>
+                        </button>
+                        <button onclick="openQuizModal()" class="p-2.5 rounded-xl bg-cyan-neon/10 border border-cyan-neon text-cyan-neon font-semibold text-xs">
+                            <i class="fa-solid fa-brain"></i> Quiz
+                        </button>
+                    </div>
+                </div>
+
+                <!-- Search Input -->
+                <div class="relative w-full md:w-96">
+                    <i class="fa-solid fa-magnifying-glass absolute left-3.5 top-1/2 -translate-y-1/2 text-cyan-400/70 text-sm"></i>
+                    <input 
+                        type="text" 
+                        id="searchInput" 
+                        placeholder="Tìm khái niệm (VD: Qubit, Docker, IPv6, CoT, C2PA...)" 
+                        class="w-full pl-10 pr-9 py-2 rounded-xl bg-navy-950/90 border border-cyan-500/30 text-sm text-white placeholder-slate-400 focus:outline-none focus:border-cyan-neon focus:ring-1 focus:ring-cyan-neon transition-all"
+                    >
+                    <button id="clearSearchBtn" onclick="clearSearch()" class="hidden absolute right-3 top-1/2 -translate-y-1/2 text-slate-400 hover:text-white">
+                        <i class="fa-solid fa-xmark"></i>
+                    </button>
+                </div>
+
+                <!-- Desktop Actions -->
+                <div class="hidden md:flex items-center gap-3">
+                    <button onclick="openBookmarkModal()" class="flex items-center gap-2 px-3.5 py-2 rounded-xl bg-navy-800/80 border border-cyan-500/30 text-sm font-medium text-slate-200 hover:border-cyan-neon hover:text-cyan-neon transition-all">
+                        <i class="fa-solid fa-bookmark text-cyan-neon"></i>
+                        <span>Sổ tay</span>
+                        <span id="bookmarkCountDesktop" class="px-1.5 py-0.5 rounded-md bg-cyan-neon/20 text-cyan-neon font-mono text-xs font-bold">0</span>
+                    </button>
+                    <button onclick="openQuizModal()" class="flex items-center gap-2 px-4 py-2 rounded-xl bg-cyan-neon text-navy-950 text-sm font-bold hover:bg-cyan-300 shadow-[0_0_15px_rgba(0,240,255,0.4)] transition-all">
+                        <i class="fa-solid fa-bolt"></i>
+                        <span>Kiểm tra nhanh</span>
+                    </button>
+                </div>
+            </div>
+        </div>
+    </header>
+
+    <!-- Main Content Container -->
+    <main class="flex-1 max-w-7xl w-full mx-auto px-4 sm:px-6 lg:px-8 py-6 space-y-8">
+        
+        <!-- Hero Section: Interactive 8-Pillar Radar & Core Vision -->
+        <section class="rounded-2xl glass-panel border border-cyan-500/30 p-6 sm:p-8 relative overflow-hidden">
+            <div class="absolute top-0 right-0 w-64 h-64 bg-cyan-neon/5 rounded-full blur-3xl pointer-events-none"></div>
+            
+            <div class="grid grid-cols-1 lg:grid-cols-12 gap-8 items-center">
+                <!-- Left Column: Core Vision & Engineer Portrait -->
+                <div class="lg:col-span-7 space-y-5">
+                    <div class="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-cyan-neon/10 border border-cyan-neon/30 text-cyan-neon text-xs font-mono">
+                        <span class="w-2 h-2 rounded-full bg-cyan-neon animate-pulse"></span>
+                        <span>BẢN THIẾT KẾ KỸ THUẬT SỐ • 14 TRANG TÀI LIỆU GỐC</span>
+                    </div>
+                    
+                    <h2 class="text-2xl sm:text-3xl lg:text-4xl font-extrabold text-white leading-tight">
+                        Toàn cảnh Công nghệ Thông tin <span class="text-cyan-neon neon-text">4.0</span>
+                    </h2>
+                    
+                    <p class="text-slate-300 text-sm sm:text-base leading-relaxed">
+                        Bản thiết kế kỹ thuật số đi từ nền tảng vật lý cơ sở đến tầng siêu trí tuệ, được dẫn dắt bởi đạo đức số. Khám phá 8 trụ cột kiến thức cốt lõi bằng cách nhấn trực tiếp vào từng đỉnh trên biểu đồ Radar hoặc duyệt các thẻ học tập bên dưới.
+                    </p>
+
+                    <!-- Quote Box: Chân dung Kỹ sư CNTT 4.0 -->
+                    <div class="p-4 rounded-xl bg-navy-950/80 border-l-4 border-cyan-neon space-y-2">
+                        <div class="flex items-center gap-2 text-xs font-mono text-cyan-neon uppercase tracking-wider">
+                            <i class="fa-solid fa-user-astronaut"></i>
+                            <span>Chân dung Kỹ sư Công nghệ Thông tin thế hệ 4.0</span>
+                        </div>
+                        <p class="text-sm sm:text-base font-medium text-white italic">
+                            “Công nghệ là nền móng vật lý. Dữ liệu là nhiên liệu bứt phá. Tư duy hệ thống là động cơ cốt lõi. Và Đạo đức con người chính là vô lăng định hướng.”
+                        </p>
+                        <p class="text-xs text-slate-400">
+                            Không ngừng học tập suốt đời, rèn luyện kỹ năng đánh giá phản biện để sẵn sàng làm chủ kỷ nguyên Vibe Coding và Trí tuệ nhân tạo.
+                        </p>
+                    </div>
+
+                    <!-- Quick Stats / Pillars Info -->
+                    <div class="grid grid-cols-2 sm:grid-cols-4 gap-3 pt-1">
+                        <div class="p-3 rounded-xl bg-navy-900/90 border border-cyan-500/20">
+                            <div class="text-xs text-slate-400">Trụ cột kiến trúc</div>
+                            <div class="text-lg font-bold text-cyan-neon font-mono">08 Trụ cột</div>
+                        </div>
+                        <div class="p-3 rounded-xl bg-navy-900/90 border border-cyan-500/20">
+                            <div class="text-xs text-slate-400">Dữ liệu toàn cầu 2025</div>
+                            <div class="text-lg font-bold text-white font-mono">175 ZB</div>
+                        </div>
+                        <div class="p-3 rounded-xl bg-navy-900/90 border border-cyan-500/20">
+                            <div class="text-xs text-slate-400">Tốc độ mạng 6G</div>
+                            <div class="text-lg font-bold text-white font-mono">1 Tbps (&lt;1ms)</div>
+                        </div>
+                        <div class="p-3 rounded-xl bg-navy-900/90 border border-cyan-500/20">
+                            <div class="text-xs text-slate-400">Không gian IPv6</div>
+                            <div class="text-lg font-bold text-cyan-neon font-mono">128-bit</div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Right Column: Interactive 8-Pillar SVG Radar Chart -->
+                <div class="lg:col-span-5 flex flex-col items-center justify-center">
+                    <div class="relative w-full max-w-[380px] aspect-square flex items-center justify-center">
+                        <svg id="radarChart" viewBox="0 0 420 420" class="w-full h-full drop-shadow-[0_0_20px_rgba(0,240,255,0.15)]">
+                            <!-- Background Web Rings (Octagons) -->
+                            <g stroke="rgba(0, 240, 255, 0.22)" stroke-width="1" fill="none">
+                                <!-- Outer Octagon (r=135) -->
+                                <polygon points="210,75 305.5,114.5 345,210 305.5,305.5 210,345 114.5,305.5 75,210 114.5,114.5" fill="rgba(0, 240, 255, 0.04)" stroke="rgba(0, 240, 255, 0.5)" stroke-width="1.5"/>
+                                <!-- Ring 3 (r=105) -->
+                                <polygon points="210,105 284.2,135.8 315,210 284.2,284.2 210,315 135.8,284.2 105,210 135.8,135.8"/>
+                                <!-- Ring 2 (r=75) -->
+                                <polygon points="210,135 263,157 285,210 263,263 210,285 157,263 135,210 157,157" fill="rgba(0, 240, 255, 0.06)"/>
+                                <!-- Ring 1 (r=40) -->
+                                <polygon points="210,170 238.3,181.7 250,210 238.3,238.3 210,250 181.7,238.3 170,210 181.7,181.7"/>
+                                
+                                <!-- Radial Axis Lines -->
+                                <line x1="210" y1="210" x2="210" y2="75" />
+                                <line x1="210" y1="210" x2="305.5" y2="114.5" />
+                                <line x1="210" y1="210" x2="345" y2="210" />
+                                <line x1="210" y1="210" x2="305.5" y2="305.5" />
+                                <line x1="210" y1="210" x2="210" y2="345" />
+                                <line x1="210" y1="210" x2="114.5" y2="305.5" />
+                                <line x1="210" y1="210" x2="75" y2="210" />
+                                <line x1="210" y1="210" x2="114.5" y2="114.5" />
+                            </g>
+
+                            <!-- Active Data Polygon -->
+                            <polygon points="210,88 292,128 330,210 290,290 210,330 125,295 88,210 125,125" 
+                                     fill="rgba(0, 240, 255, 0.16)" 
+                                     stroke="#00f0ff" 
+                                     stroke-width="2" />
+
+                            <!-- Center Core -->
+                            <circle cx="210" cy="210" r="6" fill="#00f0ff" />
+                            <circle cx="210" cy="210" r="14" fill="none" stroke="#00f0ff" stroke-opacity="0.5" />
+
+                            <!-- Interactive Nodes (8 Pillars from Page 1) -->
+                            <!-- 1. Top: HISTORY 4.0 -->
+                            <g class="radar-node" onclick="selectPillarFromRadar('history')">
+                                <circle class="node-pulse" cx="210" cy="75" r="10" fill="#00f0ff" fill-opacity="0.2"/>
+                                <circle cx="210" cy="75" r="5" fill="#00f0ff"/>
+                                <text x="210" y="52" text-anchor="middle" fill="#ffffff" font-size="11" font-weight="700" font-family="JetBrains Mono">HISTORY 4.0</text>
+                            </g>
+
+                            <!-- 2. Top-Right: HARDWARE -->
+                            <g class="radar-node" onclick="selectPillarFromRadar('hardware')">
+                                <circle class="node-pulse" cx="305.5" cy="114.5" r="10" fill="#00f0ff" fill-opacity="0.2"/>
+                                <circle cx="305.5" cy="114.5" r="5" fill="#00f0ff"/>
+                                <text x="322" y="102" text-anchor="start" fill="#ffffff" font-size="11" font-weight="700" font-family="JetBrains Mono">HARDWARE</text>
+                            </g>
+
+                            <!-- 3. Right: OS -->
+                            <g class="radar-node" onclick="selectPillarFromRadar('os')">
+                                <circle class="node-pulse" cx="345" cy="210" r="10" fill="#00f0ff" fill-opacity="0.2"/>
+                                <circle cx="345" cy="210" r="5" fill="#00f0ff"/>
+                                <text x="360" y="214" text-anchor="start" fill="#ffffff" font-size="11" font-weight="700" font-family="JetBrains Mono">OS</text>
+                            </g>
+
+                            <!-- 4. Bottom-Right: INTERNET -->
+                            <g class="radar-node" onclick="selectPillarFromRadar('internet')">
+                                <circle class="node-pulse" cx="305.5" cy="305.5" r="10" fill="#00f0ff" fill-opacity="0.2"/>
+                                <circle cx="305.5" cy="305.5" r="5" fill="#00f0ff"/>
+                                <text x="322" y="322" text-anchor="start" fill="#ffffff" font-size="11" font-weight="700" font-family="JetBrains Mono">INTERNET</text>
+                            </g>
+
+                            <!-- 5. Bottom: CLOUD -->
+                            <g class="radar-node" onclick="selectPillarFromRadar('cloud')">
+                                <circle class="node-pulse" cx="210" cy="345" r="10" fill="#00f0ff" fill-opacity="0.2"/>
+                                <circle cx="210" cy="345" r="5" fill="#00f0ff"/>
+                                <text x="210" y="372" text-anchor="middle" fill="#ffffff" font-size="11" font-weight="700" font-family="JetBrains Mono">CLOUD</text>
+                            </g>
+
+                            <!-- 6. Bottom-Left: AI -->
+                            <g class="radar-node" onclick="selectPillarFromRadar('ai')">
+                                <circle class="node-pulse" cx="114.5" cy="305.5" r="10" fill="#00f0ff" fill-opacity="0.2"/>
+                                <circle cx="114.5" cy="305.5" r="5" fill="#00f0ff"/>
+                                <text x="98" y="322" text-anchor="end" fill="#ffffff" font-size="11" font-weight="700" font-family="JetBrains Mono">AI &amp; DATA</text>
+                            </g>
+
+                            <!-- 7. Left: COMPUTATIONAL THINKING -->
+                            <g class="radar-node" onclick="selectPillarFromRadar('thinking')">
+                                <circle class="node-pulse" cx="75" cy="210" r="10" fill="#00f0ff" fill-opacity="0.2"/>
+                                <circle cx="75" cy="210" r="5" fill="#00f0ff"/>
+                                <text x="62" y="205" text-anchor="end" fill="#ffffff" font-size="10" font-weight="700" font-family="JetBrains Mono">COMPUTATIONAL</text>
+                                <text x="62" y="218" text-anchor="end" fill="#ffffff" font-size="10" font-weight="700" font-family="JetBrains Mono">THINKING</text>
+                            </g>
+
+                            <!-- 8. Top-Left: SECURITY/ETHICS -->
+                            <g class="radar-node" onclick="selectPillarFromRadar('security')">
+                                <circle class="node-pulse" cx="114.5" cy="114.5" r="10" fill="#00f0ff" fill-opacity="0.2"/>
+                                <circle cx="114.5" cy="114.5" r="5" fill="#00f0ff"/>
+                                <text x="98" y="98" text-anchor="end" fill="#ffffff" font-size="10" font-weight="700" font-family="JetBrains Mono">SECURITY/</text>
+                                <text x="98" y="111" text-anchor="end" fill="#ffffff" font-size="10" font-weight="700" font-family="JetBrains Mono">ETHICS</text>
+                            </g>
+                        </svg>
+                    </div>
+                    <span class="text-xs font-mono text-cyan-400/80 mt-1"><i class="fa-solid fa-hand-pointer mr-1"></i> Nhấn vào từng đỉnh trụ cột để lọc tài liệu</span>
+                </div>
+            </div>
+        </section>
+
+        <!-- Category Filter Bar -->
+        <section class="space-y-4">
+            <div class="flex items-center justify-between">
+                <h3 class="text-lg font-bold text-white flex items-center gap-2">
+                    <i class="fa-solid fa-layer-group text-cyan-neon"></i>
+                    <span>Kho Học Liệu Chuyên Đề</span>
+                    <span id="resultCount" class="text-xs font-mono px-2 py-0.5 rounded-full bg-navy-800 text-cyan-neon border border-cyan-500/30">12 thẻ</span>
+                </h3>
+                <button id="resetFilterBtn" onclick="resetFilters()" class="hidden text-xs font-mono text-cyan-neon hover:underline">
+                    <i class="fa-solid fa-rotate-left mr-1"></i> Hiển thị tất cả
+                </button>
+            </div>
+
+            <!-- Horizontal Scrollable Filter Pills -->
+            <div id="categoryFilters" class="flex items-center gap-2 overflow-x-auto no-scrollbar pb-2">
+                <!-- Populated by JS -->
+            </div>
+        </section>
+
+        <!-- Knowledge Cards Grid -->
+        <section id="cardsGrid" class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+            <!-- Populated by JS -->
+        </section>
+
+        <!-- Empty Search State -->
+        <div id="emptyState" class="hidden text-center py-16 px-4 rounded-2xl glass-panel border border-cyan-500/20">
+            <i class="fa-solid fa-satellite-dish text-4xl text-cyan-neon/60 mb-3"></i>
+            <h4 class="text-lg font-bold text-white">Không tìm thấy nội dung phù hợp trong tài liệu</h4>
+            <p class="text-sm text-slate-400 mt-1 max-w-md mx-auto">Vui lòng thử từ khóa khác có trong file PDF (ví dụ: Qubit, Thrashing, Docker, IPv6, NIST, Chain of Thought, C2PA, UNESCO...).</p>
+            <button onclick="resetFilters()" class="mt-4 px-4 py-2 rounded-xl bg-cyan-neon text-navy-950 text-sm font-bold hover:bg-cyan-300 transition-all">
+                Xóa bộ lọc &amp; Xem tất cả
+            </button>
+        </div>
+
+    </main>
+
+    <!-- Footer -->
+    <footer class="border-t border-cyan-500/20 bg-navy-950/90 py-6 mt-12">
+        <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 flex flex-col sm:flex-row items-center justify-between gap-4 text-xs text-slate-400">
+            <div class="flex items-center gap-2">
+                <i class="fa-solid fa-shield-halved text-cyan-neon"></i>
+                <span>Nguồn dữ liệu: 100% trích xuất từ tài liệu <strong class="text-slate-200">Kiến_trúc_CNTT_4.0.pdf</strong> (14 trang).</span>
+            </div>
+            <div class="font-mono text-cyan-400/70">
+                THE DIGITAL ERA BLUEPRINT • GEMINI NOTEBOOK
+            </div>
+        </div>
+    </footer>
+
+    <!-- DETAIL READING MODAL -->
+    <div id="detailModal" class="fixed inset-0 z-50 hidden items-center justify-center p-3 sm:p-6 bg-navy-950/85 backdrop-blur-md">
+        <div class="relative w-full max-w-4xl max-h-[90vh] flex flex-col rounded-2xl bg-navy-900 border border-cyan-neon/50 shadow-[0_0_40px_rgba(0,240,255,0.2)] overflow-hidden">
+            <!-- Modal Header -->
+            <div class="flex items-center justify-between px-6 py-4 bg-navy-950 border-b border-cyan-500/25">
+                <div class="flex items-center gap-3">
+                    <span id="modalBadge" class="px-2.5 py-1 rounded-md bg-cyan-neon/15 border border-cyan-neon/40 text-cyan-neon font-mono text-xs font-bold">TRỤ CỘT</span>
+                    <span id="modalPageRef" class="text-xs font-mono text-slate-400">Trang PDF</span>
+                </div>
+                <div class="flex items-center gap-2">
+                    <button id="modalBookmarkBtn" onclick="toggleBookmarkCurrent()" class="px-3 py-1.5 rounded-lg bg-navy-800 border border-cyan-500/30 text-xs font-semibold text-slate-200 hover:border-cyan-neon hover:text-cyan-neon transition-all flex items-center gap-1.5">
+                        <i class="fa-regular fa-bookmark"></i>
+                        <span>Lưu sổ tay</span>
+                    </button>
+                    <button onclick="closeDetailModal()" class="w-8 h-8 rounded-lg bg-navy-800 text-slate-300 hover:bg-red-500/20 hover:text-red-400 flex items-center justify-center transition-colors">
+                        <i class="fa-solid fa-xmark"></i>
+                    </button>
+                </div>
+            </div>
+
+            <!-- Modal Body (Scrollable) -->
+            <div id="modalBody" class="p-6 overflow-y-auto space-y-6 text-slate-200">
+                <!-- Dynamic Detailed Content -->
+            </div>
+
+            <!-- Modal Footer Navigation -->
+            <div class="flex items-center justify-between px-6 py-3 bg-navy-950 border-t border-cyan-500/20 text-xs">
+                <button id="prevCardBtn" onclick="navigateModal(-1)" class="px-3 py-2 rounded-lg bg-navy-800 text-slate-300 hover:text-cyan-neon hover:bg-navy-700 disabled:opacity-40 disabled:pointer-events-none flex items-center gap-1.5">
+                    <i class="fa-solid fa-arrow-left"></i> Bài trước
+                </button>
+                <span class="font-mono text-slate-400">Chế độ đọc chi tiết</span>
+                <button id="nextCardBtn" onclick="navigateModal(1)" class="px-3 py-2 rounded-lg bg-navy-800 text-slate-300 hover:text-cyan-neon hover:bg-navy-700 disabled:opacity-40 disabled:pointer-events-none flex items-center gap-1.5">
+                    Bài tiếp <i class="fa-solid fa-arrow-right"></i>
+                </button>
+            </div>
+        </div>
+    </div>
+
+    <!-- BOOKMARKS & PERSONAL NOTES DRAWER/MODAL -->
+    <div id="bookmarkModal" class="fixed inset-0 z-50 hidden items-center justify-center p-3 sm:p-6 bg-navy-950/85 backdrop-blur-md">
+        <div class="relative w-full max-w-2xl max-h-[85vh] flex flex-col rounded-2xl bg-navy-900 border border-cyan-neon/50 shadow-[0_0_40px_rgba(0,240,255,0.2)] overflow-hidden">
+            <div class="flex items-center justify-between px-6 py-4 bg-navy-950 border-b border-cyan-500/25">
+                <div class="flex items-center gap-2.5">
+                    <i class="fa-solid fa-bookmark text-cyan-neon"></i>
+                    <h3 class="text-base font-bold text-white">Sổ Tay Học Tập Đã Lưu</h3>
+                </div>
+                <button onclick="closeBookmarkModal()" class="w-8 h-8 rounded-lg bg-navy-800 text-slate-300 hover:text-white flex items-center justify-center">
+                    <i class="fa-solid fa-xmark"></i>
+                </button>
+            </div>
+            <div id="bookmarkList" class="p-6 overflow-y-auto space-y-4">
+                <!-- Populated by JS -->
+            </div>
+        </div>
+    </div>
+
+    <!-- QUIZ MODAL (100% PDF CONTENT) -->
+    <div id="quizModal" class="fixed inset-0 z-50 hidden items-center justify-center p-3 sm:p-6 bg-navy-950/85 backdrop-blur-md">
+        <div class="relative w-full max-w-2xl max-h-[90vh] flex flex-col rounded-2xl bg-navy-900 border border-cyan-neon/50 shadow-[0_0_40px_rgba(0,240,255,0.2)] overflow-hidden">
+            <div class="flex items-center justify-between px-6 py-4 bg-navy-950 border-b border-cyan-500/25">
+                <div class="flex items-center gap-2.5">
+                    <i class="fa-solid fa-bolt text-cyan-neon"></i>
+                    <h3 class="text-base font-bold text-white">Kiểm Tra Kiến Thức CNTT 4.0</h3>
+                </div>
+                <button onclick="closeQuizModal()" class="w-8 h-8 rounded-lg bg-navy-800 text-slate-300 hover:text-white flex items-center justify-center">
+                    <i class="fa-solid fa-xmark"></i>
+                </button>
+            </div>
+            <div id="quizBody" class="p-6 overflow-y-auto space-y-5">
+                <!-- Quiz UI rendered via JS -->
+            </div>
+        </div>
+    </div>
+
+    <!-- Toast Notification -->
+    <div id="toast" class="fixed bottom-5 right-5 z-50 hidden items-center gap-2.5 px-4 py-3 rounded-xl bg-navy-900 border border-cyan-neon text-white text-sm shadow-[0_0_20px_rgba(0,240,255,0.3)]">
+        <i class="fa-solid fa-circle-check text-cyan-neon"></i>
+        <span id="toastMsg">Đã lưu vào sổ tay</span>
+    </div>
+
+    <script>
+        // ============================================================================
+        // DỮ LIỆU KIẾN THỨC 100% TRÍCH XUẤT TỪ FILE "Kiến_trúc_CNTT_4.0.pdf"
+        // ============================================================================
+        const PILLARS = [
+            { id: 'all', label: 'Tất cả (12)', icon: 'fa-border-all' },
+            { id: 'history', label: 'History 4.0', icon: 'fa-clock-rotate-left' },
+            { id: 'hardware', label: 'Hardware', icon: 'fa-microchip' },
+            { id: 'os', label: 'OS & Ảo hóa', icon: 'fa-server' },
+            { id: 'internet', label: 'Internet', icon: 'fa-globe' },
+            { id: 'cloud', label: 'Cloud', icon: 'fa-cloud' },
+            { id: 'ai', label: 'AI & Big Data', icon: 'fa-brain' },
+            { id: 'thinking', label: 'Thinking & Code', icon: 'fa-diagram-project' },
+            { id: 'security', label: 'Security & Ethics', icon: 'fa-shield-halved' }
+        ];
+
+        const KNOWLEDGE_CARDS = [
+            {
+                id: 'card-1',
+                pillar: 'history',
+                pillarName: 'HISTORY 4.0',
+                page: 'Trang 2',
+                icon: 'fa-timeline',
+                title: 'Sự hội tụ công nghệ định hình Cách mạng Công nghiệp 4.0',
+                summary: 'Tiến trình phát triển từ CMCN 1.0 (1760) đến CMCN 4.0 (2010+) với sự hội tụ của AI, IoT, Big Data, Cloud Computing và Blockchain.',
+                tags: ['CMCN 4.0', 'AI', 'IoT', 'Big Data', 'Blockchain'],
+                renderDetail: () => `
+                    <div class="space-y-6">
+                        <div>
+                            <h2 class="text-2xl font-extrabold text-white">Sự hội tụ công nghệ định hình Cách mạng Công nghiệp 4.0</h2>
+                            <p class="text-slate-300 text-sm mt-2 leading-relaxed">
+                                CMCN 4.0 kết nối thế giới vật lý và thế giới số thông qua máy móc thông minh. Sự chuyển dịch này dẫn đến nhu cầu khổng lồ về <strong class="text-cyan-neon">Kỹ sư AI</strong>, <strong class="text-cyan-neon">Data Analyst</strong>, và <strong class="text-cyan-neon">chuyên gia An ninh mạng</strong>.
+                            </p>
+                        </div>
+
+                        <!-- Timeline 4 cuộc CMCN -->
+                        <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                            <div class="p-4 rounded-xl bg-navy-950 border border-cyan-500/20">
+                                <span class="text-xs font-mono text-cyan-neon font-bold">1.0 (1760)</span>
+                                <h4 class="text-base font-bold text-white mt-1">Cơ khí hóa / Máy hơi nước</h4>
+                                <p class="text-xs text-slate-400 mt-1">Khởi đầu kỷ nguyên cơ khí hóa sản xuất.</p>
+                            </div>
+                            <div class="p-4 rounded-xl bg-navy-950 border border-cyan-500/20">
+                                <span class="text-xs font-mono text-cyan-neon font-bold">2.0 (1870)</span>
+                                <h4 class="text-base font-bold text-white mt-1">Sản xuất hàng loạt / Điện năng</h4>
+                                <p class="text-xs text-slate-400 mt-1">Ứng dụng điện năng và dây chuyền sản xuất quy mô lớn.</p>
+                            </div>
+                            <div class="p-4 rounded-xl bg-navy-950 border border-cyan-500/20">
+                                <span class="text-xs font-mono text-cyan-neon font-bold">3.0 (1970)</span>
+                                <h4 class="text-base font-bold text-white mt-1">Tự động hóa / Máy tính &amp; Internet</h4>
+                                <p class="text-xs text-slate-400 mt-1">Kỷ nguyên công nghệ thông tin và tự động hóa điện tử.</p>
+                            </div>
+                            <div class="p-4 rounded-xl bg-cyan-neon/10 border border-cyan-neon">
+                                <span class="text-xs font-mono text-cyan-neon font-bold">4.0 (2010+)</span>
+                                <h4 class="text-base font-bold text-white mt-1">Hội tụ Công nghệ Số &amp; Vật lý</h4>
+                                <div class="flex flex-wrap gap-1.5 mt-2">
+                                    <span class="px-2 py-0.5 rounded bg-navy-950 text-cyan-neon font-mono text-xs">AI</span>
+                                    <span class="px-2 py-0.5 rounded bg-navy-950 text-cyan-neon font-mono text-xs">IoT</span>
+                                    <span class="px-2 py-0.5 rounded bg-navy-950 text-cyan-neon font-mono text-xs">Big Data</span>
+                                    <span class="px-2 py-0.5 rounded bg-navy-950 text-cyan-neon font-mono text-xs">Cloud Computing</span>
+                                    <span class="px-2 py-0.5 rounded bg-navy-950 text-cyan-neon font-mono text-xs">Blockchain</span>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                `
+            },
+            {
+                id: 'card-2',
+                pillar: 'history',
+                pillarName: 'HISTORY 4.0',
+                page: 'Trang 3',
+                icon: 'fa-arrows-spin',
+                title: 'Bản chất của Chuyển đổi số: Tái cấu trúc, không chỉ là số hóa',
+                summary: 'Phân biệt rõ ràng giữa Tin học hóa (chỉ đổi công cụ lưu trữ) và Chuyển đổi số (thay đổi quy trình, tạo giá trị mới) cùng 3 động lực UNIDO.',
+                tags: ['Tin học hóa', 'Chuyển đổi số', 'UNIDO'],
+                renderDetail: () => `
+                    <div class="space-y-6">
+                        <h2 class="text-2xl font-extrabold text-white">Bản chất của Chuyển đổi số là tái cấu trúc, không chỉ là số hóa</h2>
+
+                        <!-- Bảng so sánh Tin học hóa vs Chuyển đổi số -->
+                        <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                            <div class="p-5 rounded-xl bg-navy-950 border border-slate-700 space-y-3">
+                                <div class="flex items-center justify-between">
+                                    <h4 class="text-lg font-bold text-slate-200">Tin học hóa</h4>
+                                    <span class="px-2 py-0.5 rounded bg-slate-800 text-slate-300 font-mono text-xs">Số hóa dữ liệu</span>
+                                </div>
+                                <ul class="space-y-2 text-sm text-slate-300">
+                                    <li><i class="fa-solid fa-file-pdf text-cyan-400 mr-2"></i>Số hóa dữ liệu (VD: Từ điển giấy thành đĩa CD).</li>
+                                    <li><i class="fa-solid fa-xmark text-amber-400 mr-2"></i><strong>Không</strong> thay đổi quy trình cốt lõi hay mô hình kinh doanh.</li>
+                                    <li><i class="fa-solid fa-hard-drive text-cyan-400 mr-2"></i>Chỉ thay đổi công cụ lưu trữ.</li>
+                                </ul>
+                            </div>
+
+                            <div class="p-5 rounded-xl bg-cyan-neon/10 border border-cyan-neon space-y-3">
+                                <div class="flex items-center justify-between">
+                                    <h4 class="text-lg font-bold text-cyan-neon">Chuyển đổi số (CĐS)</h4>
+                                    <span class="px-2 py-0.5 rounded bg-cyan-neon/20 text-cyan-neon font-mono text-xs">Tái cấu trúc</span>
+                                </div>
+                                <ul class="space-y-2 text-sm text-white">
+                                    <li><i class="fa-solid fa-check text-cyan-neon mr-2"></i>Thay đổi hoàn toàn quy trình, tạo ra giá trị mới.</li>
+                                    <li><i class="fa-solid fa-landmark text-cyan-neon mr-2"></i>Ví dụ thực tiễn: <strong>Cổng Dịch vụ công Quốc gia</strong>.</li>
+                                </ul>
+                            </div>
+                        </div>
+
+                        <!-- 3 Động lực UNIDO -->
+                        <div class="p-5 rounded-xl bg-navy-950 border border-cyan-500/30">
+                            <h4 class="text-sm font-mono text-cyan-neon uppercase tracking-wider mb-3">Được thúc đẩy bởi 3 động lực cốt lõi (UNIDO)</h4>
+                            <div class="grid grid-cols-1 sm:grid-cols-3 gap-3">
+                                <div class="p-3 rounded-lg bg-navy-900 border border-cyan-500/20 text-center">
+                                    <div class="text-base font-bold text-white">1. Sự tất yếu</div>
+                                    <div class="text-xs font-mono text-cyan-400">(Necessity)</div>
+                                </div>
+                                <div class="p-3 rounded-lg bg-navy-900 border border-cyan-500/20 text-center">
+                                    <div class="text-base font-bold text-white">2. Công nghệ</div>
+                                    <div class="text-xs font-mono text-cyan-400">(Technology)</div>
+                                </div>
+                                <div class="p-3 rounded-lg bg-navy-900 border border-cyan-500/20 text-center">
+                                    <div class="text-base font-bold text-white">3. Kỳ vọng</div>
+                                    <div class="text-xs font-mono text-cyan-400">(Expectations)</div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                `
+            },
+            {
+                id: 'card-3',
+                pillar: 'hardware',
+                pillarName: 'HARDWARE',
+                page: 'Trang 4',
+                icon: 'fa-microchip',
+                title: 'Nền tảng vật lý dịch chuyển từ chip đa năng sang điện toán lượng tử',
+                summary: 'Cấu trúc CPU, RAM, ROM và bước chuyển dịch khi Định luật Moore tới hạn sang kiến trúc chuyên biệt (DSA/TPU) và Qubit lượng tử.',
+                tags: ['CPU', 'RAM/ROM', 'Định luật Moore', 'TPU', 'Qubit'],
+                renderDetail: () => `
+                    <div class="space-y-6">
+                        <h2 class="text-2xl font-extrabold text-white">Nền tảng vật lý dịch chuyển từ chip đa năng sang điện toán lượng tử</h2>
+
+                        <!-- Sơ đồ luồng Input -> Core -> Output -->
+                        <div class="p-4 rounded-xl bg-navy-950 border border-cyan-500/30">
+                            <div class="text-xs font-mono text-cyan-neon mb-3 uppercase">Kiến trúc Xử lý Phần cứng Cơ bản</div>
+                            <div class="flex flex-col md:flex-row items-center justify-between gap-3">
+                                <div class="px-4 py-3 rounded-lg bg-navy-900 border border-slate-600 text-center font-mono text-sm font-bold text-white w-full md:w-auto">Input</div>
+                                <i class="fa-solid fa-arrow-right text-cyan-neon rotate-90 md:rotate-0"></i>
+                                <div class="grid grid-cols-1 sm:grid-cols-3 gap-3 flex-1 w-full">
+                                    <div class="p-3 rounded-lg bg-cyan-neon/10 border border-cyan-neon">
+                                        <div class="font-bold text-cyan-neon text-sm">CPU</div>
+                                        <p class="text-xs text-slate-200 mt-1">Xung nhịp GHz, Cores, Cache. Trung tâm điều khiển.</p>
+                                    </div>
+                                    <div class="p-3 rounded-lg bg-navy-900 border border-cyan-500/30">
+                                        <div class="font-bold text-white text-sm">RAM</div>
+                                        <p class="text-xs text-slate-300 mt-1">Bộ nhớ tạm thời, bay hơi (bay dữ liệu khi mất điện).</p>
+                                    </div>
+                                    <div class="p-3 rounded-lg bg-navy-900 border border-cyan-500/30">
+                                        <div class="font-bold text-white text-sm">ROM</div>
+                                        <p class="text-xs text-slate-300 mt-1">Bộ nhớ cố định, chứa BIOS/UEFI khởi động.</p>
+                                    </div>
+                                </div>
+                                <i class="fa-solid fa-arrow-right text-cyan-neon rotate-90 md:rotate-0"></i>
+                                <div class="px-4 py-3 rounded-lg bg-navy-900 border border-slate-600 text-center font-mono text-sm font-bold text-white w-full md:w-auto">Output</div>
+                            </div>
+                        </div>
+
+                        <!-- Xu hướng 4.0 -->
+                        <div class="p-5 rounded-xl bg-gradient-to-br from-navy-950 to-navy-800 border border-cyan-neon/40 space-y-3">
+                            <div class="flex items-center gap-2 text-cyan-neon font-bold">
+                                <i class="fa-solid fa-atom"></i>
+                                <span>Xu hướng 4.0: Điện toán lượng tử &amp; Qubit</span>
+                            </div>
+                            <p class="text-sm text-slate-200 leading-relaxed">
+                                <strong>Định luật Moore tới hạn.</strong> Dịch chuyển từ CPU đa năng sang <strong>Kiến trúc chuyên biệt (DSA/TPU cho AI)</strong> và <strong>Máy tính lượng tử</strong> (sử dụng trạng thái chồng chập <strong>Qubit</strong> để giải quyết bài toán mô phỏng siêu phức tạp).
+                            </p>
+                        </div>
+                    </div>
+                `
+            },
+            {
+                id: 'card-4',
+                pillar: 'os',
+                pillarName: 'OS & ẢO HÓA',
+                page: 'Trang 5',
+                icon: 'fa-cubes',
+                title: 'Kỷ nguyên Ảo hóa tối ưu hóa việc phân bổ tài nguyên hệ thống',
+                summary: 'Vai trò của OS (chống Thrashing, nguyên tắc Least Privilege), so sánh kiến trúc Máy ảo (VM) vs Container (Docker) và tương lai AI OS.',
+                tags: ['OS', 'Thrashing', 'Least Privilege', 'VM', 'Docker', 'AI OS'],
+                renderDetail: () => `
+                    <div class="space-y-6">
+                        <h2 class="text-2xl font-extrabold text-white">Kỷ nguyên Ảo hóa tối ưu hóa việc phân bổ tài nguyên hệ thống</h2>
+
+                        <!-- Vai trò cốt lõi của OS -->
+                        <div class="p-4 rounded-xl bg-navy-950 border border-cyan-500/30 space-y-2">
+                            <h4 class="text-sm font-mono text-cyan-neon uppercase">Vai trò cốt lõi của Hệ điều hành (OS)</h4>
+                            <p class="text-sm text-slate-200 leading-relaxed">
+                                Đóng vai trò là <strong>"Người phân bổ tài nguyên"</strong> (Resource Allocator - chống thắt cổ chai <strong>Thrashing</strong>) và <strong>"Chương trình kiểm soát"</strong> (Control Program). Yêu cầu áp dụng nguyên tắc <strong>Đặc quyền tối thiểu (Least Privilege)</strong>.
+                            </p>
+                        </div>
+
+                        <!-- So sánh Máy ảo (VM) vs Container (Docker) -->
+                        <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                            <div class="p-4 rounded-xl bg-navy-950 border border-slate-700 space-y-3">
+                                <div class="flex items-center justify-between">
+                                    <h4 class="font-bold text-white">Máy ảo (VM)</h4>
+                                    <span class="text-xs font-mono px-2 py-0.5 rounded bg-slate-800 text-slate-300">Cỡ GB • Phút</span>
+                                </div>
+                                <div class="space-y-1.5 text-center font-mono text-xs">
+                                    <div class="p-2 rounded bg-navy-800 border border-slate-600 text-white">App</div>
+                                    <div class="p-2 rounded bg-navy-800 border border-slate-600 text-amber-300">Guest OS</div>
+                                    <div class="p-2 rounded bg-navy-800 border border-slate-600 text-cyan-300">Hypervisor</div>
+                                    <div class="p-2 rounded bg-navy-900 border border-slate-700 text-slate-400">Hardware</div>
+                                </div>
+                                <p class="text-xs text-slate-300">Cách ly cấp độ phần cứng. Nặng cỡ GB, khởi động tính bằng phút.</p>
+                            </div>
+
+                            <div class="p-4 rounded-xl bg-cyan-neon/10 border border-cyan-neon space-y-3">
+                                <div class="flex items-center justify-between">
+                                    <h4 class="font-bold text-cyan-neon">Container (Docker)</h4>
+                                    <span class="text-xs font-mono px-2 py-0.5 rounded bg-cyan-neon/20 text-cyan-neon">Cỡ MB • Giây</span>
+                                </div>
+                                <div class="space-y-1.5 text-center font-mono text-xs">
+                                    <div class="grid grid-cols-2 gap-2">
+                                        <div class="p-2 rounded bg-navy-900 border border-cyan-neon text-white">App 1</div>
+                                        <div class="p-2 rounded bg-navy-900 border border-cyan-neon text-white">App 2</div>
+                                    </div>
+                                    <div class="p-2 rounded bg-cyan-neon/20 border border-cyan-neon text-cyan-neon font-bold">Container Engine (Docker)</div>
+                                    <div class="p-2 rounded bg-navy-900 border border-cyan-500/40 text-slate-200">Host OS</div>
+                                    <div class="p-2 rounded bg-navy-950 border border-cyan-500/30 text-slate-400">Hardware</div>
+                                </div>
+                                <p class="text-xs text-white">Dùng chung Kernel máy chủ. Nhẹ cỡ MB, khởi động bằng giây.</p>
+                            </div>
+                        </div>
+
+                        <!-- Xu hướng tương lai -->
+                        <div class="p-4 rounded-xl bg-navy-950 border-l-4 border-cyan-neon">
+                            <span class="text-xs font-mono text-cyan-neon font-bold uppercase">Xu hướng tương lai</span>
+                            <p class="text-sm text-white mt-1">
+                                <strong>AI OS</strong> - Hệ điều hành thông minh dự đoán tài nguyên chủ động thay vì phản ứng thụ động.
+                            </p>
+                        </div>
+                    </div>
+                `
+            },
+            {
+                id: 'card-5',
+                pillar: 'internet',
+                pillarName: 'INTERNET',
+                page: 'Trang 6',
+                icon: 'fa-satellite',
+                title: 'Mạch máu số tiến hóa từ thoại analog đến mạng lưới vệ tinh không độ trễ',
+                summary: 'Tiến hóa mạng di động 1G đến 6G (1 Tbps, <1ms), giao thức TCP vs UDP và chuyển đổi sang địa chỉ IPv6 128-bit cho IoT & Smart Cities.',
+                tags: ['5G', '6G', 'TCP', 'UDP', 'IPv6', 'IoT'],
+                renderDetail: () => `
+                    <div class="space-y-6">
+                        <h2 class="text-2xl font-extrabold text-white">Mạch máu số tiến hóa từ thoại analog đến mạng lưới vệ tinh không độ trễ</h2>
+
+                        <!-- Cellular Evolution -->
+                        <div class="p-4 rounded-xl bg-navy-950 border border-cyan-500/30 space-y-3">
+                            <h4 class="text-xs font-mono text-cyan-neon uppercase">Cellular Evolution (Tiến hóa mạng di động)</h4>
+                            <div class="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-6 gap-2 text-center">
+                                <div class="p-2.5 rounded-lg bg-navy-900 border border-slate-700">
+                                    <div class="font-bold text-white text-sm">1G</div>
+                                    <div class="text-[11px] text-slate-400">Analog</div>
+                                </div>
+                                <div class="p-2.5 rounded-lg bg-navy-900 border border-slate-700">
+                                    <div class="font-bold text-white text-sm">2G</div>
+                                    <div class="text-[11px] text-slate-400">Kỹ thuật số</div>
+                                </div>
+                                <div class="p-2.5 rounded-lg bg-navy-900 border border-slate-700">
+                                    <div class="font-bold text-white text-sm">3G</div>
+                                    <div class="text-[11px] text-slate-400">Dữ liệu di động</div>
+                                </div>
+                                <div class="p-2.5 rounded-lg bg-navy-900 border border-cyan-500/30">
+                                    <div class="font-bold text-cyan-300 text-sm">4G</div>
+                                    <div class="text-[11px] text-slate-300">All-IP</div>
+                                </div>
+                                <div class="p-2.5 rounded-lg bg-navy-900 border border-cyan-500/50">
+                                    <div class="font-bold text-cyan-neon text-sm">5G</div>
+                                    <div class="text-[11px] text-slate-200">Hỗ trợ IoT</div>
+                                </div>
+                                <div class="p-2.5 rounded-lg bg-cyan-neon/15 border border-cyan-neon">
+                                    <div class="font-bold text-cyan-neon text-sm">6G</div>
+                                    <div class="text-[10px] text-white leading-tight mt-0.5">Mạng vệ tinh 3D, Native AI, 1 Tbps, &lt;1ms</div>
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- Network Protocols -->
+                        <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                            <div class="p-4 rounded-xl bg-navy-950 border border-cyan-500/30">
+                                <div class="text-sm font-bold text-cyan-neon font-mono">Giao thức TCP</div>
+                                <p class="text-sm text-white mt-1">HTTP / Độ tin cậy cao</p>
+                            </div>
+                            <div class="p-4 rounded-xl bg-navy-950 border border-cyan-500/30">
+                                <div class="text-sm font-bold text-cyan-neon font-mono">Giao thức UDP</div>
+                                <p class="text-sm text-white mt-1">Livestream / Game / Độ trễ thấp</p>
+                            </div>
+                        </div>
+
+                        <!-- IPv4 to IPv6 -->
+                        <div class="p-4 rounded-xl bg-navy-950 border-l-4 border-cyan-neon">
+                            <h4 class="text-sm font-bold text-white">Hạ tầng địa chỉ IPv6</h4>
+                            <p class="text-sm text-slate-300 mt-1 leading-relaxed">
+                                Sự cạn kiệt của địa chỉ IPv4 buộc phải chuyển đổi sang <strong class="text-cyan-neon">IPv6 (128-bit, 340 undecillion địa chỉ)</strong>. Đây là nền tảng hạ tầng kỹ thuật bắt buộc để vận hành hệ sinh thái <strong>Internet of Things (IoT)</strong> và <strong>Thành phố thông minh (Smart Cities)</strong>.
+                            </p>
+                        </div>
+                    </div>
+                `
+            },
+            {
+                id: 'card-6',
+                pillar: 'cloud',
+                pillarName: 'CLOUD',
+                page: 'Trang 7',
+                icon: 'fa-cloud',
+                title: 'Đám mây ảo hóa hạ tầng vật lý thành các dịch vụ theo yêu cầu',
+                summary: 'Các mô hình triển khai (Public, Private, Hybrid, Multi-Cloud), mô hình dịch vụ (SaaS, PaaS, IaaS) và 5 đặc tính thiết yếu của NIST.',
+                tags: ['SaaS', 'PaaS', 'IaaS', 'Multi-Cloud', 'NIST'],
+                renderDetail: () => `
+                    <div class="space-y-6">
+                        <h2 class="text-2xl font-extrabold text-white">Đám mây ảo hóa hạ tầng vật lý thành các dịch vụ theo yêu cầu</h2>
+
+                        <!-- Mô hình triển khai -->
+                        <div class="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                            <div class="p-3.5 rounded-xl bg-navy-950 border border-cyan-500/25">
+                                <div class="font-bold text-white text-sm">Public Cloud (Công cộng)</div>
+                                <p class="text-xs text-slate-400 mt-1">Hạ tầng đám mây cung cấp công cộng qua Internet.</p>
+                            </div>
+                            <div class="p-3.5 rounded-xl bg-navy-950 border border-cyan-500/25">
+                                <div class="font-bold text-white text-sm">Private Cloud (Riêng tư)</div>
+                                <p class="text-xs text-slate-400 mt-1">Bảo mật sau tường lửa.</p>
+                            </div>
+                            <div class="p-3.5 rounded-xl bg-navy-950 border border-cyan-500/25">
+                                <div class="font-bold text-white text-sm">Hybrid Cloud (Lai)</div>
+                                <p class="text-xs text-slate-400 mt-1">Kết hợp linh hoạt giữa Public và Private Cloud.</p>
+                            </div>
+                            <div class="p-3.5 rounded-xl bg-cyan-neon/10 border border-cyan-neon">
+                                <div class="font-bold text-cyan-neon text-sm">Multi-Cloud (Đa đám mây)</div>
+                                <p class="text-xs text-slate-200 mt-1">Chống lệ thuộc nhà cung cấp / Vendor lock-in.</p>
+                            </div>
+                        </div>
+
+                        <!-- SaaS, PaaS, IaaS -->
+                        <div class="grid grid-cols-1 md:grid-cols-3 gap-4">
+                            <div class="p-4 rounded-xl bg-navy-950 border border-cyan-500/30">
+                                <span class="px-2 py-0.5 rounded bg-cyan-neon/20 text-cyan-neon font-mono text-xs font-bold">SaaS</span>
+                                <h4 class="font-bold text-white mt-2">Phần mềm dịch vụ</h4>
+                                <p class="text-xs text-slate-300 mt-1">Ứng dụng dùng ngay cho người dùng cuối.</p>
+                                <div class="mt-2 text-xs font-mono text-cyan-400">VD: Gmail, Trello</div>
+                            </div>
+                            <div class="p-4 rounded-xl bg-navy-950 border border-cyan-500/30">
+                                <span class="px-2 py-0.5 rounded bg-cyan-neon/20 text-cyan-neon font-mono text-xs font-bold">PaaS</span>
+                                <h4 class="font-bold text-white mt-2">Nền tảng dịch vụ</h4>
+                                <p class="text-xs text-slate-300 mt-1">Môi trường code cho Developer.</p>
+                                <div class="mt-2 text-xs font-mono text-cyan-400">VD: Heroku, App Engine</div>
+                            </div>
+                            <div class="p-4 rounded-xl bg-navy-950 border border-cyan-500/30">
+                                <span class="px-2 py-0.5 rounded bg-cyan-neon/20 text-cyan-neon font-mono text-xs font-bold">IaaS</span>
+                                <h4 class="font-bold text-white mt-2">Hạ tầng dịch vụ</h4>
+                                <p class="text-xs text-slate-300 mt-1">Thuê phần cứng, mạng, máy chủ.</p>
+                                <div class="mt-2 text-xs font-mono text-cyan-400">VD: AWS, Azure</div>
+                            </div>
+                        </div>
+
+                        <!-- 5 Đặc tính thiết yếu (NIST) -->
+                        <div class="p-4 rounded-xl bg-navy-950 border border-cyan-500/30">
+                            <h4 class="text-xs font-mono text-cyan-neon uppercase mb-2.5">5 Đặc tính thiết yếu của Đám mây (NIST)</h4>
+                            <div class="flex flex-wrap gap-2">
+                                <span class="px-3 py-1.5 rounded-lg bg-navy-900 border border-cyan-500/30 text-xs text-white">1. Truy cập mạng rộng rãi</span>
+                                <span class="px-3 py-1.5 rounded-lg bg-navy-900 border border-cyan-500/30 text-xs text-white">2. Tự phục vụ theo nhu cầu</span>
+                                <span class="px-3 py-1.5 rounded-lg bg-navy-900 border border-cyan-500/30 text-xs text-white">3. Co giãn nhanh</span>
+                                <span class="px-3 py-1.5 rounded-lg bg-navy-900 border border-cyan-500/30 text-xs text-white">4. Đo lường dịch vụ</span>
+                                <span class="px-3 py-1.5 rounded-lg bg-navy-900 border border-cyan-500/30 text-xs text-white">5. Dùng chung tài nguyên</span>
+                            </div>
+                        </div>
+                    </div>
+                `
+            },
+            {
+                id: 'card-7',
+                pillar: 'ai',
+                pillarName: 'AI & BIG DATA',
+                page: 'Trang 8',
+                icon: 'fa-brain',
+                title: 'Khối óc Kỷ nguyên số biến dữ liệu thô thành siêu trí tuệ',
+                summary: 'Mối quan hệ cộng sinh giữa Big Data (4V: 175 ZB năm 2025) và AI (Intelligent Agent), tiến trình ANI -> AGI -> ASI và Sandbox pháp lý.',
+                tags: ['Big Data 4V', '175 ZB', 'ANI/AGI/ASI', 'Sandbox pháp lý'],
+                renderDetail: () => `
+                    <div class="space-y-6">
+                        <h2 class="text-2xl font-extrabold text-white">Khối óc Kỷ nguyên số biến dữ liệu thô thành siêu trí tuệ</h2>
+
+                        <!-- Big Data vs AI -->
+                        <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                            <div class="p-4 rounded-xl bg-navy-950 border border-cyan-500/30 space-y-2.5">
+                                <div class="text-sm font-bold text-cyan-neon">Dữ liệu lớn (Big Data) - Nhiên liệu thô</div>
+                                <ul class="space-y-1.5 text-xs text-slate-200">
+                                    <li><strong class="text-white">Volume (Khối lượng):</strong> 175 ZB năm 2025</li>
+                                    <li><strong class="text-white">Variety (Đa dạng cấu trúc)</strong></li>
+                                    <li><strong class="text-white">Velocity (Tốc độ thời gian thực)</strong></li>
+                                    <li><strong class="text-white">Veracity (Độ tin cậy / Thứ tin cậy)</strong></li>
+                                </ul>
+                            </div>
+
+                            <div class="p-4 rounded-xl bg-navy-950 border border-cyan-500/30 space-y-2.5">
+                                <div class="text-sm font-bold text-cyan-neon">Trí tuệ nhân tạo (AI) - Động cơ xử lý</div>
+                                <p class="text-xs text-slate-300">Chu trình tương tác khép kín:</p>
+                                <div class="p-2.5 rounded-lg bg-navy-900 border border-cyan-500/20 text-xs font-mono text-center text-white">
+                                    Môi trường (Environment) &rarr; Cảm biến (Sensors) &rarr; Tác nhân thông minh (Intelligent Agent) &rarr; Bộ phận thực thi (Actuators)
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- Tiến trình ANI -> AGI -> ASI -->
+                        <div class="p-4 rounded-xl bg-navy-950 border border-cyan-500/30">
+                            <div class="text-xs font-mono text-cyan-neon uppercase mb-3">Thang tiến hóa Trí tuệ nhân tạo</div>
+                            <div class="grid grid-cols-1 sm:grid-cols-3 gap-3">
+                                <div class="p-3 rounded-lg bg-navy-900 border border-cyan-500/40">
+                                    <div class="font-bold text-white text-sm">ANI</div>
+                                    <div class="text-xs text-cyan-400">AI Hẹp / Đơn nhiệm - Hiện tại</div>
+                                </div>
+                                <div class="p-3 rounded-lg bg-navy-900 border border-cyan-500/40">
+                                    <div class="font-bold text-white text-sm">AGI</div>
+                                    <div class="text-xs text-cyan-400">AI Tổng quát / Đa nhiệm</div>
+                                </div>
+                                <div class="p-3 rounded-lg bg-cyan-neon/15 border border-cyan-neon">
+                                    <div class="font-bold text-cyan-neon text-sm">ASI</div>
+                                    <div class="text-xs text-white">Siêu trí tuệ</div>
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- Sandbox pháp lý -->
+                        <div class="p-4 rounded-xl bg-navy-950 border-l-4 border-cyan-neon text-sm text-slate-200">
+                            Cần áp dụng <strong>“Sandbox pháp lý”</strong> để thử nghiệm an toàn công nghệ mới, đồng thời cân bằng giữa <strong>Dữ liệu mở (Open Data)</strong> và <strong>Bảo vệ quyền riêng tư cá nhân</strong>.
+                        </div>
+                    </div>
+                `
+            },
+            {
+                id: 'card-8',
+                pillar: 'ai',
+                pillarName: 'AI & BIG DATA',
+                page: 'Trang 9',
+                icon: 'fa-terminal',
+                title: 'Kỹ nghệ Giao tiếp mở khóa sức mạnh của mô hình ngôn ngữ (Prompt Engineering)',
+                summary: '4 thành phần cấu trúc Prompt (Context, Instruction, Examples, Format) và kỹ thuật Chain of Thought (CoT) triệt tiêu ảo giác Hallucination.',
+                tags: ['Prompt Engineering', 'Zero-shot', 'Chain of Thought', 'Hallucination'],
+                renderDetail: () => `
+                    <div class="space-y-6">
+                        <h2 class="text-2xl font-extrabold text-white">Kỹ nghệ Giao tiếp mở khóa sức mạnh của mô hình ngôn ngữ</h2>
+
+                        <!-- 4 khối cấu trúc Prompt -->
+                        <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-3">
+                            <div class="p-3.5 rounded-xl bg-navy-950 border border-cyan-500/30">
+                                <span class="text-xs font-mono text-cyan-neon">01. Context</span>
+                                <h4 class="font-bold text-white text-sm mt-1">Ngữ cảnh</h4>
+                                <p class="text-xs text-slate-300 mt-1">Bối cảnh và vai trò</p>
+                            </div>
+                            <div class="p-3.5 rounded-xl bg-navy-950 border border-cyan-500/30">
+                                <span class="text-xs font-mono text-cyan-neon">02. Instruction</span>
+                                <h4 class="font-bold text-white text-sm mt-1">Chỉ thị</h4>
+                                <p class="text-xs text-slate-300 mt-1">Yêu cầu cốt lõi</p>
+                            </div>
+                            <div class="p-3.5 rounded-xl bg-navy-950 border border-cyan-500/30">
+                                <span class="text-xs font-mono text-cyan-neon">03. Examples</span>
+                                <h4 class="font-bold text-white text-sm mt-1">Ví dụ</h4>
+                                <p class="text-xs text-slate-300 mt-1">Dữ liệu mẫu</p>
+                            </div>
+                            <div class="p-3.5 rounded-xl bg-navy-950 border border-cyan-500/30">
+                                <span class="text-xs font-mono text-cyan-neon">04. Format</span>
+                                <h4 class="font-bold text-white text-sm mt-1">Định dạng</h4>
+                                <p class="text-xs text-slate-300 mt-1">Cấu trúc đầu ra</p>
+                            </div>
+                        </div>
+
+                        <!-- Kiến trúc Suy luận Logic -->
+                        <div class="p-5 rounded-xl bg-navy-950 border border-cyan-neon/40 space-y-4">
+                            <h4 class="text-sm font-mono text-cyan-neon uppercase">Kiến trúc Suy luận Logic</h4>
+                            
+                            <div class="space-y-3">
+                                <div class="p-3 rounded-lg bg-navy-900 border border-slate-700 flex flex-wrap items-center gap-3">
+                                    <span class="font-mono text-xs font-bold text-slate-300 w-36">Zero-shot:</span>
+                                    <span class="px-2.5 py-1 rounded bg-navy-950 text-xs font-mono text-white">Input</span>
+                                    <i class="fa-solid fa-arrow-right-long text-cyan-neon"></i>
+                                    <span class="px-2.5 py-1 rounded bg-navy-950 text-xs font-mono text-white">Output</span>
+                                </div>
+
+                                <div class="p-3 rounded-lg bg-cyan-neon/10 border border-cyan-neon flex flex-wrap items-center gap-2">
+                                    <span class="font-mono text-xs font-bold text-cyan-neon w-36">Chain of Thought (CoT):</span>
+                                    <span class="px-2 py-1 rounded bg-navy-950 text-xs font-mono text-white">Input</span>
+                                    <i class="fa-solid fa-arrow-right text-cyan-neon text-xs"></i>
+                                    <span class="px-2 py-1 rounded bg-cyan-neon/20 text-xs font-mono text-cyan-neon">Bước 1</span>
+                                    <i class="fa-solid fa-arrow-right text-cyan-neon text-xs"></i>
+                                    <span class="px-2 py-1 rounded bg-cyan-neon/20 text-xs font-mono text-cyan-neon">Bước 2</span>
+                                    <i class="fa-solid fa-arrow-right text-cyan-neon text-xs"></i>
+                                    <span class="px-2 py-1 rounded bg-cyan-neon/20 text-xs font-mono text-cyan-neon">Bước 3</span>
+                                    <i class="fa-solid fa-arrow-right text-cyan-neon text-xs"></i>
+                                    <span class="px-2 py-1 rounded bg-navy-950 text-xs font-mono text-white">Output</span>
+                                </div>
+                            </div>
+
+                            <p class="text-sm text-slate-200 leading-relaxed">
+                                Prompt Engineering là sự giao thoa giữa nghệ thuật tạo ngữ cảnh và khoa học chỉ thị. Kỹ thuật <strong>Chain of Thought (Suy nghĩ từng bước)</strong> bắt buộc AI chia nhỏ lập luận, giúp triệt tiêu hiện tượng <strong>ảo giác (Hallucination)</strong> trong các bài toán logic phức tạp.
+                            </p>
+                        </div>
+                    </div>
+                `
+            },
+            {
+                id: 'card-9',
+                pillar: 'thinking',
+                pillarName: 'THINKING & CODE',
+                page: 'Trang 10',
+                icon: 'fa-diagram-project',
+                title: 'Tư duy máy tính: Năng lực định hướng máy móc vô tri',
+                summary: '4 trụ cột của Computational Thinking (Phân rã, Trừu tượng hóa, Nhận diện khuôn mẫu, Thiết kế thuật toán) giúp né tránh bùng nổ tổ hợp.',
+                tags: ['Decomposition', 'Abstraction', 'Pattern', 'Algorithm'],
+                renderDetail: () => `
+                    <div class="space-y-6">
+                        <h2 class="text-2xl font-extrabold text-white">Tư duy máy tính: Năng lực định hướng máy móc vô tri</h2>
+
+                        <!-- 4 trụ cột Tư duy máy tính -->
+                        <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                            <div class="p-4 rounded-xl bg-navy-950 border border-cyan-500/30">
+                                <div class="text-xs font-mono text-cyan-neon">01. Decomposition</div>
+                                <h4 class="font-bold text-white mt-1">Phân rã</h4>
+                                <p class="text-xs text-slate-300 mt-1">Chia nhỏ vấn đề phức tạp thành các phần nhỏ dễ quản lý.</p>
+                            </div>
+                            <div class="p-4 rounded-xl bg-navy-950 border border-cyan-500/30">
+                                <div class="text-xs font-mono text-cyan-neon">02. Abstraction</div>
+                                <h4 class="font-bold text-white mt-1">Trừu tượng hóa</h4>
+                                <p class="text-xs text-slate-300 mt-1">Lọc bỏ chi tiết nhiễu, giữ lại bản chất cốt lõi.</p>
+                            </div>
+                            <div class="p-4 rounded-xl bg-navy-950 border border-cyan-500/30">
+                                <div class="text-xs font-mono text-cyan-neon">03. Pattern Recognition</div>
+                                <h4 class="font-bold text-white mt-1">Nhận diện khuôn mẫu</h4>
+                                <p class="text-xs text-slate-300 mt-1">Tìm ra quy luật lặp lại trong dữ liệu và bài toán.</p>
+                            </div>
+                            <div class="p-4 rounded-xl bg-navy-950 border border-cyan-500/30">
+                                <div class="text-xs font-mono text-cyan-neon">04. Algorithm Design</div>
+                                <h4 class="font-bold text-white mt-1">Thiết kế thuật toán</h4>
+                                <p class="text-xs text-slate-300 mt-1">Xây dựng từng bước chỉ dẫn chính xác dẫn tới <strong>Giải pháp cốt lõi</strong>.</p>
+                            </div>
+                        </div>
+
+                        <!-- Bản chất của Tư duy máy tính -->
+                        <div class="p-5 rounded-xl bg-navy-950 border border-cyan-neon/30 space-y-3">
+                            <h4 class="text-sm font-mono text-cyan-neon uppercase">Bản chất của Tư duy máy tính (Computational Thinking)</h4>
+                            <ul class="space-y-2 text-sm text-slate-200 leading-relaxed">
+                                <li><i class="fa-solid fa-bolt text-cyan-neon mr-2"></i>Máy tính có tốc độ siêu tốc (hàng nghìn tỷ phép tính/giây) nhưng <strong>“mù quáng”</strong>, thực thi vô điều kiện và thiếu trực giác (common sense).</li>
+                                <li><i class="fa-solid fa-user text-cyan-neon mr-2"></i>Con người tốc độ chậm nhưng có năng lực hiểu ngữ cảnh và linh hoạt sửa sai.</li>
+                                <li><i class="fa-solid fa-compass text-cyan-neon mr-2"></i>Tư duy máy tính là kỹ năng tâm trí chuyển đổi ý tưởng của con người thành thuật toán để giao việc chính xác cho máy móc, giúp né tránh các bài toán nan giải (<strong>bùng nổ tổ hợp</strong>).</li>
+                            </ul>
+                        </div>
+                    </div>
+                `
+            },
+            {
+                id: 'card-10',
+                pillar: 'thinking',
+                pillarName: 'THINKING & CODE',
+                page: 'Trang 11',
+                icon: 'fa-code',
+                title: 'Tự động hóa IT và kỷ nguyên Vibe Coding cùng AI',
+                summary: 'Vòng lặp Trigger -> Script -> Workflow, 3 cấp độ tự động hóa (BPA, RPA, IaC) và tiến hóa từ Hard code sang Vibe-code.',
+                tags: ['BPA', 'RPA', 'IaC', 'Low-code/No-code', 'Vibe-code'],
+                renderDetail: () => `
+                    <div class="space-y-6">
+                        <h2 class="text-2xl font-extrabold text-white">Tự động hóa IT và kỷ nguyên Vibe Coding cùng AI</h2>
+
+                        <!-- Vòng lặp tự động hóa -->
+                        <div class="p-4 rounded-xl bg-navy-950 border border-cyan-500/30">
+                            <div class="text-xs font-mono text-cyan-neon uppercase mb-3">Chu trình Tự động hóa Cơ bản</div>
+                            <div class="grid grid-cols-1 sm:grid-cols-3 gap-3 text-center">
+                                <div class="p-3 rounded-lg bg-navy-900 border border-cyan-500/30">
+                                    <div class="font-bold text-white text-sm">1. Kích hoạt (Trigger)</div>
+                                    <div class="text-xs text-cyan-400 mt-1">Bắt giữ sự kiện</div>
+                                </div>
+                                <div class="p-3 rounded-lg bg-navy-900 border border-cyan-500/30">
+                                    <div class="font-bold text-white text-sm">2. Kịch bản (Script)</div>
+                                    <div class="text-xs text-cyan-400 mt-1">Tập lệnh xử lý</div>
+                                </div>
+                                <div class="p-3 rounded-lg bg-navy-900 border border-cyan-500/30">
+                                    <div class="font-bold text-white text-sm">3. Quy trình (Workflow)</div>
+                                    <div class="text-xs text-cyan-400 mt-1">Chuỗi hành động liên tiếp</div>
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- 3 Cấp độ tự động hóa -->
+                        <div class="grid grid-cols-1 md:grid-cols-3 gap-3">
+                            <div class="p-4 rounded-xl bg-navy-950 border border-slate-700">
+                                <span class="text-xs font-mono text-cyan-neon font-bold">BPA • Cấp độ Vĩ mô</span>
+                                <p class="text-xs text-slate-200 mt-2">Tự động hóa luồng quy trình kinh doanh cốt lõi liên phòng ban.</p>
+                            </div>
+                            <div class="p-4 rounded-xl bg-navy-950 border border-slate-700">
+                                <span class="text-xs font-mono text-cyan-neon font-bold">RPA • Cấp độ Giao diện</span>
+                                <p class="text-xs text-slate-200 mt-2">Robot bắt chước thao tác con người trên giao diện phần mềm 24/7.</p>
+                            </div>
+                            <div class="p-4 rounded-xl bg-navy-950 border border-slate-700">
+                                <span class="text-xs font-mono text-cyan-neon font-bold">IaC • Cấp độ Hạ tầng</span>
+                                <p class="text-xs text-slate-200 mt-2">Infrastructure as Code - Quản lý, cấu hình máy chủ bằng mã lệnh.</p>
+                            </div>
+                        </div>
+
+                        <!-- Tiến hóa lập trình -->
+                        <div class="space-y-2.5">
+                            <h4 class="text-xs font-mono text-cyan-neon uppercase">Tiến hóa Phương thức Lập trình</h4>
+                            <div class="grid grid-cols-1 sm:grid-cols-3 gap-3">
+                                <div class="p-3.5 rounded-xl bg-navy-950 border border-slate-700">
+                                    <div class="font-bold text-white text-sm">Hard code (Truyền thống)</div>
+                                    <p class="text-xs text-slate-400 mt-1">Kỹ sư viết từng dòng lệnh thủ công.</p>
+                                </div>
+                                <div class="p-3.5 rounded-xl bg-navy-950 border border-cyan-500/30">
+                                    <div class="font-bold text-white text-sm">Low-code / No-code</div>
+                                    <p class="text-xs text-slate-300 mt-1">Giao diện kéo thả trực quan dành cho Citizen Automators.</p>
+                                </div>
+                                <div class="p-3.5 rounded-xl bg-cyan-neon/10 border border-cyan-neon">
+                                    <div class="font-bold text-cyan-neon text-sm">Vibe-code</div>
+                                    <p class="text-xs text-white mt-1">Lập trình bằng hội thoại tự nhiên, AI đóng vai trò là Pair Programmer.</p>
+                                </div>
+                            </div>
+                        </div>
+
+                        <div class="p-4 rounded-xl bg-navy-950 border-l-4 border-cyan-neon text-sm text-white">
+                            <strong>Sự dịch chuyển vai trò lập trình viên:</strong> Từ người gõ code sang người điều phối kiến trúc và thẩm định hộp đen AI.
+                        </div>
+                    </div>
+                `
+            },
+            {
+                id: 'card-11',
+                pillar: 'security',
+                pillarName: 'SECURITY & ETHICS',
+                page: 'Trang 12',
+                icon: 'fa-shield-halved',
+                title: 'Tấm khiên bảo vệ tài sản số trước rủi ro và Deepfake',
+                summary: 'Bộ ba CIA & ISO 27000 cùng 3 tuyến phòng thủ chống Deepfake (Đạo luật AI EU, Sinh trắc học PPG, Chuẩn siêu dữ liệu C2PA).',
+                tags: ['CIA Triad', 'ISO 27000', 'Deepfake', 'PPG', 'C2PA'],
+                renderDetail: () => `
+                    <div class="space-y-6">
+                        <h2 class="text-2xl font-extrabold text-white">Tấm khiên bảo vệ tài sản số trước rủi ro và Deepfake</h2>
+
+                        <!-- Bộ ba CIA & ISO 27000 -->
+                        <div class="p-4 rounded-xl bg-navy-950 border border-cyan-500/30">
+                            <div class="text-xs font-mono text-cyan-neon uppercase mb-3">Bộ ba CIA &amp; ISO 27000</div>
+                            <div class="grid grid-cols-1 sm:grid-cols-3 gap-3 text-center">
+                                <div class="p-3 rounded-lg bg-navy-900 border border-cyan-500/30">
+                                    <div class="font-bold text-white">Bảo mật</div>
+                                    <div class="text-xs font-mono text-cyan-400">(Confidentiality)</div>
+                                </div>
+                                <div class="p-3 rounded-lg bg-navy-900 border border-cyan-500/30">
+                                    <div class="font-bold text-white">Toàn vẹn</div>
+                                    <div class="text-xs font-mono text-cyan-400">(Integrity)</div>
+                                </div>
+                                <div class="p-3 rounded-lg bg-navy-900 border border-cyan-500/30">
+                                    <div class="font-bold text-white">Sẵn sàng</div>
+                                    <div class="text-xs font-mono text-cyan-400">(Availability)</div>
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- 3 Tuyến phòng thủ Deepfake -->
+                        <div class="space-y-3">
+                            <h4 class="text-xs font-mono text-cyan-neon uppercase">3 Tuyến Phòng Thủ Chống Deepfake</h4>
+                            <div class="p-3.5 rounded-xl bg-navy-950 border border-slate-700">
+                                <span class="text-xs font-mono text-cyan-neon font-bold">Tuyến 1: Chính sách &amp; Pháp luật</span>
+                                <p class="text-sm text-slate-200 mt-1">Đạo luật AI của EU, Cơ chế Opt-out bản quyền.</p>
+                            </div>
+                            <div class="p-3.5 rounded-xl bg-navy-950 border border-slate-700">
+                                <span class="text-xs font-mono text-cyan-neon font-bold">Tuyến 2: Công nghệ nhận diện</span>
+                                <p class="text-sm text-slate-200 mt-1">Sinh trắc học PPG đo vi tuần hoàn máu, Phân tích không gian/thời gian.</p>
+                            </div>
+                            <div class="p-3.5 rounded-xl bg-navy-950 border border-cyan-neon/50">
+                                <span class="text-xs font-mono text-cyan-neon font-bold">Tuyến 3: Xác thực nguồn gốc</span>
+                                <p class="text-sm text-slate-200 mt-1">Siêu dữ liệu chuẩn C2PA, Thủy vân số (Watermarking) và Dấu vân tay số.</p>
+                            </div>
+                        </div>
+
+                        <!-- Lưu ý cốt lõi -->
+                        <div class="p-4 rounded-xl bg-amber-500/10 border-l-4 border-amber-400 text-sm text-slate-200">
+                            <strong class="text-amber-300">Lưu ý cốt lõi:</strong> Con người luôn là mắt xích yếu nhất trong hệ thống bảo mật. Không một công cụ kỹ thuật đơn lẻ nào có thể chống lại hoàn toàn Deepfake; cần sự phối hợp đồng bộ giữa pháp luật, chuẩn công nghệ và nhận thức cộng đồng.
+                        </div>
+                    </div>
+                `
+            },
+            {
+                id: 'card-12',
+                pillar: 'security',
+                pillarName: 'SECURITY & ETHICS',
+                page: 'Trang 13 - 14',
+                icon: 'fa-scale-balanced',
+                title: 'Đạo đức số: Chiếc la bàn định hướng công nghệ vì nhân loại',
+                summary: 'Khung đạo đức từ UNESCO, OpenAI, Microsoft, Google cùng hành lang pháp lý đi trước đón đầu của Việt Nam (2019 - 2026).',
+                tags: ['UNESCO', 'OpenAI', 'Microsoft', 'Google', 'Pháp lý Việt Nam'],
+                renderDetail: () => `
+                    <div class="space-y-6">
+                        <h2 class="text-2xl font-extrabold text-white">Đạo đức số: Chiếc la bàn định hướng công nghệ vì nhân loại</h2>
+
+                        <!-- 4 Tổ chức Quốc tế -->
+                        <div class="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                            <div class="p-4 rounded-xl bg-navy-950 border border-cyan-500/30">
+                                <div class="font-bold text-cyan-neon text-sm">UNESCO</div>
+                                <p class="text-xs text-slate-200 mt-1">Bảo vệ quyền con người &amp; Hệ sinh thái (Chiếc ô toàn cầu).</p>
+                            </div>
+                            <div class="p-4 rounded-xl bg-navy-950 border border-cyan-500/30">
+                                <div class="font-bold text-cyan-neon text-sm">OpenAI</div>
+                                <p class="text-xs text-slate-200 mt-1">Kiểm soát Siêu trí tuệ (AGI) an toàn dài hạn.</p>
+                            </div>
+                            <div class="p-4 rounded-xl bg-navy-950 border border-cyan-500/30">
+                                <div class="font-bold text-cyan-neon text-sm">Microsoft</div>
+                                <p class="text-xs text-slate-200 mt-1">Khung 6 trụ cột thực hành phần mềm đáng tin cậy.</p>
+                            </div>
+                            <div class="p-4 rounded-xl bg-navy-950 border border-cyan-500/30">
+                                <div class="font-bold text-cyan-neon text-sm">Google</div>
+                                <p class="text-xs text-slate-200 mt-1">Cân bằng giữa Đổi mới táo bạo &amp; Trách nhiệm xã hội.</p>
+                            </div>
+                        </div>
+
+                        <!-- Hành lang pháp lý Việt Nam -->
+                        <div class="p-4 rounded-xl bg-cyan-neon/10 border border-cyan-neon space-y-2.5">
+                            <h4 class="text-sm font-bold text-cyan-neon">Hành lang pháp lý đi trước đón đầu của Việt Nam</h4>
+                            <ul class="space-y-1.5 text-sm text-white">
+                                <li><i class="fa-solid fa-gavel text-cyan-neon mr-2"></i><strong>Luật An ninh mạng</strong> (Hiệu lực 2019)</li>
+                                <li><i class="fa-solid fa-gavel text-cyan-neon mr-2"></i><strong>Luật Trí tuệ nhân tạo</strong> (Dự kiến 2026)</li>
+                                <li><i class="fa-solid fa-gavel text-cyan-neon mr-2"></i><strong>Luật Bảo vệ Dữ liệu Cá nhân</strong> (Dự kiến 2026)</li>
+                            </ul>
+                        </div>
+
+                        <div class="p-4 rounded-xl bg-navy-950 border-l-4 border-cyan-neon italic text-sm text-slate-200">
+                            "Công nghệ thúc đẩy tốc độ, nhưng Đạo đức số mới là vô lăng định hướng. Chống thiên kiến, bảo vệ quyền riêng tư và đảm bảo minh bạch là trách nhiệm đạo đức hàng đầu của Kỹ sư CNTT 4.0."
+                        </div>
+                    </div>
+                `
+            }
+        ];
+
+        // ============================================================================
+        // CÂU HỎI TRẮC NGHIỆM (100% DỰA TRÊN FILE PDF)
+        // ============================================================================
+        const QUIZ_QUESTIONS = [
+            {
+                q: "Theo tài liệu, sự khác biệt cốt lõi giữa 'Tin học hóa' và 'Chuyển đổi số (CĐS)' là gì?",
+                options: [
+                    "Tin học hóa chỉ thay đổi công cụ lưu trữ (không đổi quy trình cốt lõi), còn Chuyển đổi số thay đổi hoàn toàn quy trình và tạo ra giá trị mới.",
+                    "Tin học hóa chỉ áp dụng cho chính phủ, còn Chuyển đổi số chỉ áp dụng cho doanh nghiệp.",
+                    "Tin học hóa sử dụng AI và Qubit, còn Chuyển đổi số sử dụng đĩa CD.",
+                    "Hai khái niệm này hoàn toàn giống nhau về quy trình vận hành."
+                ],
+                answer: 0,
+                explain: "Trang 3 PDF: Tin học hóa là số hóa dữ liệu (VD: từ điển giấy thành đĩa CD), không thay đổi quy trình cốt lõi; Chuyển đổi số thay đổi hoàn toàn quy trình, tạo ra giá trị mới (VD: Cổng Dịch vụ công Quốc gia)."
+            },
+            {
+                q: "Khi Định luật Moore tới hạn, xu hướng phần cứng 4.0 dịch chuyển từ CPU đa năng sang kiến trúc nào?",
+                options: [
+                    "Chỉ sử dụng bộ nhớ ROM chứa BIOS/UEFI.",
+                    "Kiến trúc chuyên biệt (DSA/TPU cho AI) và Máy tính lượng tử (sử dụng trạng thái chồng chập Qubit).",
+                    "Quay lại sử dụng máy hơi nước và mạng 1G Analog.",
+                    "Loại bỏ hoàn toàn bộ nhớ tạm thời RAM."
+                ],
+                answer: 1,
+                explain: "Trang 4 PDF: Xu hướng 4.0 khi Định luật Moore tới hạn là dịch chuyển từ CPU đa năng sang Kiến trúc chuyên biệt (DSA/TPU cho AI) và Máy tính lượng tử (Qubit)."
+            },
+            {
+                q: "Điểm khác biệt về kiến trúc và hiệu năng giữa Container (Docker) so với Máy ảo (VM) là gì?",
+                options: [
+                    "Container nặng cỡ GB và khởi động tính bằng phút.",
+                    "Container phải cài đặt riêng từng Guest OS cho mỗi ứng dụng.",
+                    "Container dùng chung Kernel máy chủ, nhẹ cỡ MB và khởi động bằng giây.",
+                    "Container cách ly ở cấp độ phần cứng thông qua Hypervisor."
+                ],
+                answer: 2,
+                explain: "Trang 5 PDF: Container (Docker) dùng chung Kernel máy chủ, nhẹ cỡ MB, khởi động bằng giây; trong khi Máy ảo (VM) cách ly cấp độ phần cứng, nặng cỡ GB và khởi động tính bằng phút."
+            },
+            {
+                q: "Kỹ thuật Prompt Engineering nào bắt buộc AI chia nhỏ lập luận theo từng bước để triệt tiêu hiện tượng ảo giác (Hallucination)?",
+                options: [
+                    "Zero-shot (Input -> Output trực tiếp)",
+                    "Chain of Thought (CoT - Suy nghĩ từng bước)",
+                    "Hard code truyền thống",
+                    "Sinh trắc học PPG"
+                ],
+                answer: 1,
+                explain: "Trang 9 PDF: Kỹ thuật Chain of Thought (Suy nghĩ từng bước) bắt buộc AI chia nhỏ lập luận (Bước 1 -> Bước 2 -> Bước 3), giúp triệt tiêu hiện tượng ảo giác (Hallucination)."
+            },
+            {
+                q: "Trong bảo vệ tài sản số và chống Deepfake, đâu được xem là 'mắt xích yếu nhất' trong hệ thống bảo mật?",
+                options: [
+                    "Siêu dữ liệu chuẩn C2PA",
+                    "Thủy vân số (Watermarking)",
+                    "Con người",
+                    "Đạo luật AI của EU"
+                ],
+                answer: 2,
+                explain: "Trang 12 PDF: Lưu ý cốt lõi - Con người luôn là mắt xích yếu nhất trong hệ thống bảo mật."
+            }
+        ];
+
+        // ============================================================================
+        // TRẠNG THÁI ỨNG DỤNG & XỬ LÝ TƯƠNG TÁC
+        // ============================================================================
+        let selectedPillar = 'all';
+        let searchQuery = '';
+        let currentModalCardId = null;
+        let bookmarks = JSON.parse(localStorage.getItem('cntt40_bookmarks') || '[]');
+        let notes = JSON.parse(localStorage.getItem('cntt40_notes') || '{}');
+
+        // Khởi tạo ứng dụng
+        document.addEventListener('DOMContentLoaded', () => {
+            renderCategoryFilters();
+            renderCards();
+            updateBookmarkCounters();
+
+            // Lắng nghe sự kiện tìm kiếm
+            const searchInput = document.getElementById('searchInput');
+            searchInput.addEventListener('input', (e) => {
+                searchQuery = e.target.value.trim().toLowerCase();
+                document.getElementById('clearSearchBtn').classList.toggle('hidden', searchQuery === '');
+                renderCards();
+            });
+        });
+
+        // Render danh sách bộ lọc danh mục
+        function renderCategoryFilters() {
+            const container = document.getElementById('categoryFilters');
+            container.innerHTML = PILLARS.map(p => {
+                const isActive = selectedPillar === p.id;
+                return `
+                    <button 
+                        onclick="selectPillar('${p.id}')"
+                        class="flex items-center gap-2 px-4 py-2 rounded-xl text-xs sm:text-sm font-semibold whitespace-nowrap transition-all ${
+                            isActive 
+                            ? 'bg-cyan-neon text-navy-950 shadow-[0_0_15px_rgba(0,240,255,0.4)]' 
+                            : 'bg-navy-900/90 text-slate-300 border border-cyan-500/25 hover:border-cyan-neon hover:text-cyan-neon'
+                        }"
+                    >
+                        <i class="fa-solid ${p.icon}"></i>
+                        <span>${p.label}</span>
+                    </button>
+                `;
+            }).join('');
+        }
+
+        // Chọn trụ cột từ thanh lọc hoặc sơ đồ Radar
+        function selectPillar(pillarId) {
+            selectedPillar = pillarId;
+            renderCategoryFilters();
+            renderCards();
+        }
+
+        function selectPillarFromRadar(pillarId) {
+            selectPillar(pillarId);
+            document.getElementById('categoryFilters').scrollIntoView({ behavior: 'smooth', block: 'center' });
+            showToast(`Đã lọc theo trụ cột: ${pillarId.toUpperCase()}`);
+        }
+
+        function clearSearch() {
+            document.getElementById('searchInput').value = '';
+            searchQuery = '';
+            document.getElementById('clearSearchBtn').classList.add('hidden');
+            renderCards();
+        }
+
+        function resetFilters() {
+            selectedPillar = 'all';
+            clearSearch();
+            renderCategoryFilters();
+            renderCards();
+        }
+
+        // Lọc dữ liệu thẻ
+        function getFilteredCards() {
+            return KNOWLEDGE_CARDS.filter(card => {
+                const matchPillar = selectedPillar === 'all' || card.pillar === selectedPillar;
+                const matchSearch = !searchQuery || 
+                    card.title.toLowerCase().includes(searchQuery) ||
+                    card.summary.toLowerCase().includes(searchQuery) ||
+                    card.pillarName.toLowerCase().includes(searchQuery) ||
+                    card.tags.some(t => t.toLowerCase().includes(searchQuery));
+                return matchPillar && matchSearch;
+            });
+        }
+
+        // Render lưới thẻ bài học
+        function renderCards() {
+            const grid = document.getElementById('cardsGrid');
+            const emptyState = document.getElementById('emptyState');
+            const resultCount = document.getElementById('resultCount');
+            const resetBtn = document.getElementById('resetFilterBtn');
+
+            const filtered = getFilteredCards();
+            resultCount.textContent = `${filtered.length} thẻ`;
+            resetBtn.classList.toggle('hidden', selectedPillar === 'all' && searchQuery === '');
+
+            if (filtered.length === 0) {
+                grid.innerHTML = '';
+                emptyState.classList.remove('hidden');
+                return;
+            }
+
+            emptyState.classList.add('hidden');
+            grid.innerHTML = filtered.map(card => {
+                const isSaved = bookmarks.includes(card.id);
+                return `
+                    <article class="rounded-2xl glass-panel neon-border p-5 flex flex-col justify-between group">
+                        <div class="space-y-4">
+                            <!-- Card Top Meta -->
+                            <div class="flex items-center justify-between">
+                                <span class="px-2.5 py-1 rounded-md bg-cyan-neon/10 border border-cyan-neon/30 text-cyan-neon font-mono text-[11px] font-bold">
+                                    ${card.pillarName}
+                                </span>
+                                <div class="flex items-center gap-2">
+                                    <span class="text-xs font-mono text-slate-400">${card.page}</span>
+                                    <button 
+                                        onclick="toggleBookmark('${card.id}', event)" 
+                                        class="w-8 h-8 rounded-lg bg-navy-950 border border-cyan-500/20 flex items-center justify-center text-sm transition-colors ${isSaved ? 'text-cyan-neon border-cyan-neon' : 'text-slate-400 hover:text-cyan-neon'}"
+                                        title="${isSaved ? 'Bỏ lưu khỏi sổ tay' : 'Lưu vào sổ tay'}"
+                                    >
+                                        <i class="${isSaved ? 'fa-solid' : 'fa-regular'} fa-bookmark"></i>
+                                    </button>
+                                </div>
+                            </div>
+
+                            <!-- Icon & Title -->
+                            <div class="space-y-2 cursor-pointer" onclick="openDetailModal('${card.id}')">
+                                <div class="w-10 h-10 rounded-xl bg-navy-950 border border-cyan-500/30 flex items-center justify-center text-cyan-neon group-hover:scale-110 transition-transform">
+                                    <i class="fa-solid ${card.icon}"></i>
+                                </div>
+                                <h3 class="text-lg font-bold text-white group-hover:text-cyan-neon transition-colors leading-snug">
+                                    ${card.title}
+                                </h3>
+                                <p class="text-sm text-slate-300 line-clamp-3 leading-relaxed">
+                                    ${card.summary}
+                                </p>
+                            </div>
+                        </div>
+
+                        <!-- Tags & Read Action -->
+                        <div class="pt-5 mt-4 border-t border-cyan-500/15 space-y-3">
+                            <div class="flex flex-wrap gap-1.5">
+                                ${card.tags.map(tag => `
+                                    <span class="px-2 py-0.5 rounded bg-navy-950 text-slate-300 font-mono text-[11px] border border-slate-800">#${tag}</span>
+                                `).join('')}
+                            </div>
+                            <button 
+                                onclick="openDetailModal('${card.id}')"
+                                class="w-full py-2.5 px-4 rounded-xl bg-navy-950 hover:bg-cyan-neon text-cyan-neon hover:text-navy-950 border border-cyan-500/40 hover:border-cyan-neon font-semibold text-sm transition-all flex items-center justify-center gap-2"
+                            >
+                                <span>Đọc chi tiết</span>
+                                <i class="fa-solid fa-arrow-right text-xs"></i>
+                            </button>
+                        </div>
+                    </article>
+                `;
+            }).join('');
+        }
+
+        // ============================================================================
+        // MODAL ĐỌC CHI TIẾT
+        // ============================================================================
+        function openDetailModal(cardId) {
+            const cardIndex = KNOWLEDGE_CARDS.findIndex(c => c.id === cardId);
+            if (cardIndex === -1) return;
+
+            currentModalCardId = cardId;
+            const card = KNOWLEDGE_CARDS[cardIndex];
+
+            document.getElementById('modalBadge').textContent = card.pillarName;
+            document.getElementById('modalPageRef').textContent = `Nguồn: ${card.page} PDF`;
+            document.getElementById('modalBody').innerHTML = `
+                ${card.renderDetail()}
+                
+                <!-- Khu vực ghi chú cá nhân cho thẻ này -->
+                <div class="pt-4 border-t border-cyan-500/20 space-y-2">
+                    <label class="text-xs font-mono text-cyan-neon uppercase flex items-center gap-1.5">
+                        <i class="fa-solid fa-pen-to-square"></i> Ghi chú ôn tập cá nhân cho chủ đề này:
+                    </label>
+                    <textarea 
+                        id="cardNoteInput" 
+                        rows="2" 
+                        placeholder="Nhập ghi chú tóm tắt của bạn tại đây..."
+                        class="w-full p-3 rounded-xl bg-navy-950 border border-cyan-500/30 text-sm text-white placeholder-slate-500 focus:outline-none focus:border-cyan-neon"
+                        onchange="saveCardNote('${card.id}', this.value)"
+                    >${notes[card.id] || ''}</textarea>
+                </div>
+            `;
+
+            updateModalBookmarkBtn();
+
+            // Cập nhật nút Prev / Next
+            document.getElementById('prevCardBtn').disabled = cardIndex === 0;
+            document.getElementById('nextCardBtn').disabled = cardIndex === KNOWLEDGE_CARDS.length - 1;
+
+            const modal = document.getElementById('detailModal');
+            modal.classList.remove('hidden');
+            modal.classList.add('flex');
+            document.body.style.overflow = 'hidden';
+        }
+
+        function closeDetailModal() {
+            const modal = document.getElementById('detailModal');
+            modal.classList.add('hidden');
+            modal.classList.remove('flex');
+            document.body.style.overflow = '';
+        }
+
+        function navigateModal(direction) {
+            const idx = KNOWLEDGE_CARDS.findIndex(c => c.id === currentModalCardId);
+            const nextIdx = idx + direction;
+            if (nextIdx >= 0 && nextIdx < KNOWLEDGE_CARDS.length) {
+                openDetailModal(KNOWLEDGE_CARDS[nextIdx].id);
+                document.getElementById('modalBody').scrollTop = 0;
+            }
+        }
+
+        // ============================================================================
+        // SỔ TAY LƯU TRỮ & GHI CHÚ (LOCALSTORAGE)
+        // ============================================================================
+        function toggleBookmark(cardId, event) {
+            if (event) event.stopPropagation();
+            const index = bookmarks.indexOf(cardId);
+            if (index === -1) {
+                bookmarks.push(cardId);
+                showToast('Đã lưu thẻ kiến thức vào Sổ tay');
+            } else {
+                bookmarks.splice(index, 1);
+                showToast('Đã xóa thẻ khỏi Sổ tay');
+            }
+            localStorage.setItem('cntt40_bookmarks', JSON.stringify(bookmarks));
+            updateBookmarkCounters();
+            renderCards();
+            if (currentModalCardId === cardId) updateModalBookmarkBtn();
+        }
+
+        function toggleBookmarkCurrent() {
+            if (currentModalCardId) toggleBookmark(currentModalCardId);
+        }
+
+        function updateModalBookmarkBtn() {
+            const btn = document.getElementById('modalBookmarkBtn');
+            const isSaved = bookmarks.includes(currentModalCardId);
+            btn.innerHTML = isSaved 
+                ? `<i class="fa-solid fa-bookmark text-cyan-neon"></i><span class="text-cyan-neon">Đã lưu</span>`
+                : `<i class="fa-regular fa-bookmark"></i><span>Lưu sổ tay</span>`;
+        }
+
+        function updateBookmarkCounters() {
+            document.getElementById('bookmarkCountDesktop').textContent = bookmarks.length;
+            document.getElementById('bookmarkCountMobile').textContent = bookmarks.length;
+        }
+
+        function saveCardNote(cardId, text) {
+            if (text.trim()) {
+                notes[cardId] = text.trim();
+            } else {
+                delete notes[cardId];
+            }
+            localStorage.setItem('cntt40_notes', JSON.stringify(notes));
+            showToast('Đã lưu ghi chú ôn tập');
+        }
+
+        function openBookmarkModal() {
+            const list = document.getElementById('bookmarkList');
+            const savedCards = KNOWLEDGE_CARDS.filter(c => bookmarks.includes(c.id));
+
+            if (savedCards.length === 0) {
+                list.innerHTML = `
+                    <div class="text-center py-10 space-y-2">
+                        <i class="fa-regular fa-bookmark text-3xl text-slate-500"></i>
+                        <p class="text-sm text-slate-300">Sổ tay của bạn chưa có thẻ kiến thức nào.</p>
+                        <p class="text-xs text-slate-400">Nhấn vào biểu tượng đánh dấu trang trên mỗi thẻ để lưu lại ôn tập.</p>
+                    </div>
+                `;
+            } else {
+                list.innerHTML = savedCards.map(c => `
+                    <div class="p-4 rounded-xl bg-navy-950 border border-cyan-500/30 flex items-start justify-between gap-4">
+                        <div class="space-y-1 cursor-pointer" onclick="closeBookmarkModal(); openDetailModal('${c.id}')">
+                            <span class="text-[10px] font-mono text-cyan-neon font-bold">${c.pillarName} • ${c.page}</span>
+                            <h4 class="text-sm font-bold text-white hover:text-cyan-neon">${c.title}</h4>
+                            ${notes[c.id] ? `<p class="text-xs text-amber-300 italic mt-1"><i class="fa-solid fa-note-sticky mr-1"></i>Ghi chú: "${notes[c.id]}"</p>` : ''}
+                        </div>
+                        <button onclick="toggleBookmark('${c.id}'); openBookmarkModal();" class="text-xs text-red-400 hover:text-red-300 p-1.5" title="Xóa khỏi sổ tay">
+                            <i class="fa-solid fa-trash"></i>
+                        </button>
+                    </div>
+                `).join('');
+            }
+
+            const modal = document.getElementById('bookmarkModal');
+            modal.classList.remove('hidden');
+            modal.classList.add('flex');
+        }
+
+        function closeBookmarkModal() {
+            const modal = document.getElementById('bookmarkModal');
+            modal.classList.add('hidden');
+            modal.classList.remove('flex');
+        }
+
+        // ============================================================================
+        // CHẾ ĐỘ KIỂM TRA NHANH (QUIZ)
+        // ============================================================================
+        let quizIndex = 0;
+        let quizScore = 0;
+        let quizAnswered = false;
+
+        function openQuizModal() {
+            quizIndex = 0;
+            quizScore = 0;
+            quizAnswered = false;
+            renderQuizQuestion();
+
+            const modal = document.getElementById('quizModal');
+            modal.classList.remove('hidden');
+            modal.classList.add('flex');
+        }
+
+        function closeQuizModal() {
+            const modal = document.getElementById('quizModal');
+            modal.classList.add('hidden');
+            modal.classList.remove('flex');
+        }
+
+        function renderQuizQuestion() {
+            const body = document.getElementById('quizBody');
+            if (quizIndex >= QUIZ_QUESTIONS.length) {
+                body.innerHTML = `
+                    <div class="text-center py-8 space-y-4">
+                        <div class="w-16 h-16 rounded-full bg-cyan-neon/20 border-2 border-cyan-neon text-cyan-neon flex items-center justify-center text-2xl font-bold mx-auto">
+                            ${quizScore}/${QUIZ_QUESTIONS.length}
+                        </div>
+                        <h4 class="text-xl font-extrabold text-white">Hoàn thành bài kiểm tra!</h4>
+                        <p class="text-sm text-slate-300 max-w-md mx-auto">
+                            Bạn đã trả lời đúng <strong class="text-cyan-neon">${quizScore} trên ${QUIZ_QUESTIONS.length}</strong> câu hỏi trích xuất từ tài liệu Kiến trúc CNTT 4.0.
+                        </p>
+                        <div class="pt-2 flex justify-center gap-3">
+                            <button onclick="openQuizModal()" class="px-5 py-2.5 rounded-xl bg-cyan-neon text-navy-950 font-bold text-sm hover:bg-cyan-300">
+                                Làm lại bài kiểm tra
+                            </button>
+                            <button onclick="closeQuizModal()" class="px-5 py-2.5 rounded-xl bg-navy-800 text-white font-semibold text-sm border border-cyan-500/30">
+                                Đóng
+                            </button>
+                        </div>
+                    </div>
+                `;
+                return;
+            }
+
+            const item = QUIZ_QUESTIONS[quizIndex];
+            quizAnswered = false;
+
+            body.innerHTML = `
+                <div class="flex items-center justify-between text-xs font-mono text-cyan-neon">
+                    <span>CÂU HỎI ${quizIndex + 1} / ${QUIZ_QUESTIONS.length}</span>
+                    <span>ĐIỂM: ${quizScore}</span>
+                </div>
+                <h4 class="text-base sm:text-lg font-bold text-white leading-snug">${item.q}</h4>
+                <div id="quizOptions" class="space-y-2.5">
+                    ${item.options.map((opt, idx) => `
+                        <button 
+                            onclick="submitQuizAnswer(${idx})"
+                            class="quiz-opt-btn w-full text-left p-3.5 rounded-xl bg-navy-950 border border-cyan-500/30 hover:border-cyan-neon text-sm text-slate-200 transition-all flex items-start gap-3"
+                        >
+                            <span class="w-6 h-6 rounded-md bg-navy-800 text-cyan-neon font-mono text-xs font-bold flex items-center justify-center shrink-0 mt-0.5">
+                                ${String.fromCharCode(65 + idx)}
+                            </span>
+                            <span>${opt}</span>
+                        </button>
+                    `).join('')}
+                </div>
+                <div id="quizFeedback" class="hidden p-4 rounded-xl bg-navy-950 border-l-4 border-cyan-neon text-xs sm:text-sm text-slate-200"></div>
+                <div class="flex justify-end pt-2">
+                    <button id="nextQuizBtn" onclick="nextQuizQuestion()" class="hidden px-5 py-2 rounded-xl bg-cyan-neon text-navy-950 font-bold text-sm hover:bg-cyan-300">
+                        Câu tiếp theo <i class="fa-solid fa-arrow-right ml-1"></i>
+                    </button>
+                </div>
+            `;
+        }
+
+        function submitQuizAnswer(selectedIdx) {
+            if (quizAnswered) return;
+            quizAnswered = true;
+
+            const item = QUIZ_QUESTIONS[quizIndex];
+            const buttons = document.querySelectorAll('.quiz-opt-btn');
+
+            buttons.forEach((btn, idx) => {
+                btn.disabled = true;
+                if (idx === item.answer) {
+                    btn.classList.remove('border-cyan-500/30');
+                    btn.classList.add('border-emerald-400', 'bg-emerald-500/15', 'text-white');
+                } else if (idx === selectedIdx && selectedIdx !== item.answer) {
+                    btn.classList.remove('border-cyan-500/30');
+                    btn.classList.add('border-red-400', 'bg-red-500/15', 'text-red-200');
+                }
+            });
+
+            if (selectedIdx === item.answer) {
+                quizScore++;
+            }
+
+            const feedback = document.getElementById('quizFeedback');
+            feedback.innerHTML = `<strong class="text-cyan-neon">Giải thích từ tài liệu:</strong> ${item.explain}`;
+            feedback.classList.remove('hidden');
+            document.getElementById('nextQuizBtn').classList.remove('hidden');
+        }
+
+        function nextQuizQuestion() {
+            quizIndex++;
+            renderQuizQuestion();
+        }
+
+        // ============================================================================
+        // THÔNG BÁO TOAST & PHÍM TẮT ESC
+        // ============================================================================
+        let toastTimeout;
+        function showToast(msg) {
+            const toast = document.getElementById('toast');
+            document.getElementById('toastMsg').textContent = msg;
+            toast.classList.remove('hidden');
+            toast.classList.add('flex');
+            clearTimeout(toastTimeout);
+            toastTimeout = setTimeout(() => {
+                toast.classList.add('hidden');
+                toast.classList.remove('flex');
+            }, 2500);
+        }
+
+        document.addEventListener('keydown', (e) => {
+            if (e.key === 'Escape') {
+                closeDetailModal();
+                closeBookmarkModal();
+                closeQuizModal();
+            }
+        });
+    </script>
+</body>
+</html>
